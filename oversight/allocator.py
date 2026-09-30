@@ -12,9 +12,11 @@ class Allocator:
 
     name = "adaptive"
 
-    def __init__(self, policy: Policy, attention: AttentionTracker):
+    def __init__(self, policy: Policy, attention: AttentionTracker, fallback_to_checker: bool = True):
         self.policy = policy
         self.attention = attention
+        # False = ablation: over budget high risk actions wait for the person instead of going to the checker
+        self.fallback_to_checker = fallback_to_checker
 
     def decide(self, action: Action, now: float) -> Decision:
         a = self.policy.assess(action)
@@ -31,9 +33,12 @@ class Allocator:
             if ok:
                 route = Route.HUMAN
                 reasons.append(f"high risk: escalate to human ({why})")
-            else:
+            elif self.fallback_to_checker:
                 route, degraded = Route.SAFETY_MODEL, True
                 reasons.append(f"high risk: human not reachable ({why}); degraded to safety model")
+            else:
+                route, deferred = Route.HUMAN, True
+                reasons.append(f"high risk: human not reachable ({why}); waits for the human")
         else:  # CRITICAL: a human is mandatory, budget is bypassed, never a model fallback
             route, exempt = Route.HUMAN, True
             if self.attention.is_available():

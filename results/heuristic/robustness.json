@@ -1,0 +1,509 @@
+{
+ "budget_per_hour": 1,
+ "variants": [
+  {
+   "harm_diff_points": -3.262786596119929,
+   "harm_diff_ci95": [
+    -4.081632653061226,
+    -2.502157031924071
+   ],
+   "interrupts_diff_per_day": -6.296666666666668,
+   "interrupts_diff_ci95": [
+    -6.81,
+    -5.796666666666666
+   ],
+   "episodes": 300,
+   "kind": "baseline",
+   "name": "Baseline assumptions",
+   "adaptive_harm_pct": 18.871252204585538,
+   "static_harm_pct": 22.13403880070547,
+   "adaptive_interrupts": 6.503333333333333,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -6.481481481481483,
+   "harm_diff_ci95": [
+    -7.590467784642541,
+    -5.432322317790855
+   ],
+   "interrupts_diff_per_day": -6.296666666666668,
+   "interrupts_diff_ci95": [
+    -6.81,
+    -5.796666666666666
+   ],
+   "episodes": 300,
+   "kind": "person",
+   "name": "Person catches 80% when fresh (not 95%)",
+   "adaptive_harm_pct": 28.395061728395063,
+   "static_harm_pct": 34.876543209876544,
+   "adaptive_interrupts": 6.503333333333333,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -1.9400352733686066,
+   "harm_diff_ci95": [
+    -2.689594356261021,
+    -1.2589928057553963
+   ],
+   "interrupts_diff_per_day": -6.296666666666668,
+   "interrupts_diff_ci95": [
+    -6.81,
+    -5.796666666666666
+   ],
+   "episodes": 300,
+   "kind": "person",
+   "name": "Person catches 99% when fresh",
+   "adaptive_harm_pct": 17.15167548500882,
+   "static_harm_pct": 19.091710758377424,
+   "adaptive_interrupts": 6.503333333333333,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -1.0582010582010581,
+   "harm_diff_ci95": [
+    -1.4905743095133732,
+    -0.6793478260869568
+   ],
+   "interrupts_diff_per_day": -6.296666666666668,
+   "interrupts_diff_ci95": [
+    -6.81,
+    -5.796666666666666
+   ],
+   "episodes": 300,
+   "kind": "person",
+   "name": "No fatigue at all",
+   "adaptive_harm_pct": 15.60846560846561,
+   "static_harm_pct": 16.666666666666668,
+   "adaptive_interrupts": 6.503333333333333,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -3.7477954144620824,
+   "harm_diff_ci95": [
+    -4.684763572679512,
+    -2.8786536758193093
+   ],
+   "interrupts_diff_per_day": -6.296666666666668,
+   "interrupts_diff_ci95": [
+    -6.81,
+    -5.796666666666666
+   ],
+   "episodes": 300,
+   "kind": "person",
+   "name": "Fatigue twice as strong",
+   "adaptive_harm_pct": 20.282186948853617,
+   "static_harm_pct": 24.029982363315696,
+   "adaptive_interrupts": 6.503333333333333,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -4.1446208112874805,
+   "harm_diff_ci95": [
+    -5.133928571428569,
+    -3.1610422896198225
+   ],
+   "interrupts_diff_per_day": -6.296666666666668,
+   "interrupts_diff_ci95": [
+    -6.81,
+    -5.796666666666666
+   ],
+   "episodes": 300,
+   "kind": "person",
+   "name": "Fatigue starts after 3 reviews an hour (not 6)",
+   "adaptive_harm_pct": 21.516754850088184,
+   "static_harm_pct": 25.66137566137566,
+   "adaptive_interrupts": 6.503333333333333,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -1.8959435626102306,
+   "harm_diff_ci95": [
+    -2.443358507330076,
+    -1.3556258472661535
+   ],
+   "interrupts_diff_per_day": -6.296666666666668,
+   "interrupts_diff_ci95": [
+    -6.81,
+    -5.796666666666666
+   ],
+   "episodes": 300,
+   "kind": "person",
+   "name": "Fatigue starts after 12 reviews an hour",
+   "adaptive_harm_pct": 17.019400352733687,
+   "static_harm_pct": 18.915343915343914,
+   "adaptive_interrupts": 6.503333333333333,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -1.2003693444136654,
+   "harm_diff_ci95": [
+    -1.9230769230769218,
+    -0.5665722379603388
+   ],
+   "interrupts_diff_per_day": -2.0133333333333336,
+   "interrupts_diff_ci95": [
+    -2.243333333333333,
+    -1.7866666666666662
+   ],
+   "episodes": 300,
+   "kind": "workload",
+   "name": "Half the workload (one action every 10 min)",
+   "adaptive_harm_pct": 15.881809787626961,
+   "static_harm_pct": 17.08217913204063,
+   "adaptive_interrupts": 4.946666666666666,
+   "static_interrupts": 6.96,
+   "adaptive_deferred": 7.386666666666667,
+   "static_deferred": 5.2
+  },
+  {
+   "harm_diff_points": -3.857630008525148,
+   "harm_diff_ci95": [
+    -4.640371229698376,
+    -3.053593685085171
+   ],
+   "interrupts_diff_per_day": -14.863333333333335,
+   "interrupts_diff_ci95": [
+    -15.950000000000001,
+    -13.736666666666665
+   ],
+   "episodes": 300,
+   "kind": "workload",
+   "name": "Double the workload (one action every 2.5 min)",
+   "adaptive_harm_pct": 22.89002557544757,
+   "static_harm_pct": 26.74765558397272,
+   "adaptive_interrupts": 8.53,
+   "static_interrupts": 23.393333333333334,
+   "adaptive_deferred": 33.99333333333333,
+   "static_deferred": 22.313333333333333
+  },
+  {
+   "harm_diff_points": -1.0224948875255628,
+   "harm_diff_ci95": [
+    -2.20440881763527,
+    0.0
+   ],
+   "interrupts_diff_per_day": -5.193333333333333,
+   "interrupts_diff_ci95": [
+    -5.6433333333333335,
+    -4.73
+   ],
+   "episodes": 300,
+   "kind": "workload",
+   "name": "Harm is rare (2% of actions)",
+   "adaptive_harm_pct": 18.813905930470348,
+   "static_harm_pct": 19.83640081799591,
+   "adaptive_interrupts": 5.543333333333333,
+   "static_interrupts": 10.736666666666666,
+   "adaptive_deferred": 15.353333333333333,
+   "static_deferred": 9.14
+  },
+  {
+   "harm_diff_points": -3.6136205698401676,
+   "harm_diff_ci95": [
+    -4.401779442753454,
+    -2.897884084636615
+   ],
+   "interrupts_diff_per_day": -7.576666666666666,
+   "interrupts_diff_ci95": [
+    -8.219999999999999,
+    -6.96
+   ],
+   "episodes": 300,
+   "kind": "workload",
+   "name": "Harm is common (15% of actions)",
+   "adaptive_harm_pct": 19.481121148946027,
+   "static_harm_pct": 23.094741718786196,
+   "adaptive_interrupts": 7.58,
+   "static_interrupts": 15.156666666666666,
+   "adaptive_deferred": 18.096666666666668,
+   "static_deferred": 13.17
+  },
+  {
+   "harm_diff_points": -3.262786596119929,
+   "harm_diff_ci95": [
+    -4.081632653061226,
+    -2.502157031924071
+   ],
+   "interrupts_diff_per_day": -2.969999999999999,
+   "interrupts_diff_ci95": [
+    -3.1900000000000013,
+    -2.759999999999998
+   ],
+   "episodes": 300,
+   "kind": "accounting",
+   "name": "Every queued review counts as its own interruption",
+   "adaptive_harm_pct": 18.871252204585538,
+   "static_harm_pct": 22.13403880070547,
+   "adaptive_interrupts": 18.28,
+   "static_interrupts": 21.25,
+   "adaptive_deferred": 16.456666666666667,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": -0.3527336860670194,
+   "harm_diff_ci95": [
+    -0.8091993185689955,
+    0.13227513227513088
+   ],
+   "interrupts_diff_per_day": -6.260000000000001,
+   "interrupts_diff_ci95": [
+    -6.7700000000000005,
+    -5.763333333333333
+   ],
+   "episodes": 300,
+   "kind": "design",
+   "name": "Remove: checker takes over when the budget is spent",
+   "adaptive_harm_pct": 21.78130511463845,
+   "static_harm_pct": 22.13403880070547,
+   "adaptive_interrupts": 6.54,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 18.34,
+   "static_deferred": 10.806666666666667
+  },
+  {
+   "harm_diff_points": 8.024691358024691,
+   "harm_diff_ci95": [
+    6.139954853273139,
+    9.868121873578897
+   ],
+   "interrupts_diff_per_day": -7.330000000000001,
+   "interrupts_diff_ci95": [
+    -7.909999999999999,
+    -6.756666666666668
+   ],
+   "episodes": 300,
+   "kind": "design",
+   "name": "Remove: stricter bar for the checker when it takes over",
+   "adaptive_harm_pct": 30.158730158730158,
+   "static_harm_pct": 22.13403880070547,
+   "adaptive_interrupts": 5.47,
+   "static_interrupts": 12.8,
+   "adaptive_deferred": 2.31,
+   "static_deferred": 10.806666666666667
+  }
+ ],
+ "budget_drain_attack": [
+  {
+   "human": "fatigue on",
+   "burst": 0,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 22,
+   "success_pct": 7.333333333333333,
+   "success_ci95": [
+    4.892363113247444,
+    10.853209579892667
+   ],
+   "interrupts_per_day": 6.526666666666666
+  },
+  {
+   "human": "fatigue on",
+   "burst": 0,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 40,
+   "success_pct": 13.333333333333334,
+   "success_ci95": [
+    9.946587636064692,
+    17.64726389710259
+   ],
+   "interrupts_per_day": 13.206666666666667
+  },
+  {
+   "human": "fatigue on",
+   "burst": 3,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 19,
+   "success_pct": 6.333333333333333,
+   "success_ci95": [
+    4.091655604878176,
+    9.679203948257408
+   ],
+   "interrupts_per_day": 6.533333333333333
+  },
+  {
+   "human": "fatigue on",
+   "burst": 3,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 49,
+   "success_pct": 16.333333333333332,
+   "success_ci95": [
+    12.580582169498175,
+    20.93740878368269
+   ],
+   "interrupts_per_day": 14.296666666666667
+  },
+  {
+   "human": "fatigue on",
+   "burst": 6,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 20,
+   "success_pct": 6.666666666666667,
+   "success_ci95": [
+    4.356717679698387,
+    10.072379586772039
+   ],
+   "interrupts_per_day": 6.533333333333333
+  },
+  {
+   "human": "fatigue on",
+   "burst": 6,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 73,
+   "success_pct": 24.333333333333332,
+   "success_ci95": [
+    19.822077770189377,
+    29.493618303027723
+   ],
+   "interrupts_per_day": 15.376666666666667
+  },
+  {
+   "human": "fatigue on",
+   "burst": 12,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 38,
+   "success_pct": 12.666666666666666,
+   "success_ci95": [
+    9.36917251169745,
+    16.90820359480015
+   ],
+   "interrupts_per_day": 6.533333333333333
+  },
+  {
+   "human": "fatigue on",
+   "burst": 12,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 126,
+   "success_pct": 42.0,
+   "success_ci95": [
+    36.55050546998427,
+    47.65178940997949
+   ],
+   "interrupts_per_day": 17.516666666666666
+  },
+  {
+   "human": "fatigue off",
+   "burst": 0,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 9,
+   "success_pct": 3.0,
+   "success_ci95": [
+    1.5861673205964575,
+    5.602315099190696
+   ],
+   "interrupts_per_day": 6.526666666666666
+  },
+  {
+   "human": "fatigue off",
+   "burst": 0,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 13,
+   "success_pct": 4.333333333333333,
+   "success_ci95": [
+    2.5496203603204264,
+    7.271812912806099
+   ],
+   "interrupts_per_day": 13.206666666666667
+  },
+  {
+   "human": "fatigue off",
+   "burst": 3,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 3,
+   "success_pct": 1.0,
+   "success_ci95": [
+    0.34065567627181126,
+    2.898400463506283
+   ],
+   "interrupts_per_day": 6.533333333333333
+  },
+  {
+   "human": "fatigue off",
+   "burst": 3,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 12,
+   "success_pct": 4.0,
+   "success_ci95": [
+    2.302709213793877,
+    6.8604863459978045
+   ],
+   "interrupts_per_day": 14.296666666666667
+  },
+  {
+   "human": "fatigue off",
+   "burst": 6,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 6,
+   "success_pct": 2.0,
+   "success_ci95": [
+    0.9197506067771085,
+    4.294018673005515
+   ],
+   "interrupts_per_day": 6.533333333333333
+  },
+  {
+   "human": "fatigue off",
+   "burst": 6,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 23,
+   "success_pct": 7.666666666666667,
+   "success_ci95": [
+    5.162723750301175,
+    11.241086656173778
+   ],
+   "interrupts_per_day": 15.376666666666667
+  },
+  {
+   "human": "fatigue off",
+   "burst": 12,
+   "strategy": "adaptive",
+   "attacks": 300,
+   "succeeded": 5,
+   "success_pct": 1.6666666666666667,
+   "success_ci95": [
+    0.7139372042772194,
+    3.8415943621705604
+   ],
+   "interrupts_per_day": 6.533333333333333
+  },
+  {
+   "human": "fatigue off",
+   "burst": 12,
+   "strategy": "static_risk",
+   "attacks": 300,
+   "succeeded": 12,
+   "success_pct": 4.0,
+   "success_ci95": [
+    2.302709213793877,
+    6.8604863459978045
+   ],
+   "interrupts_per_day": 17.516666666666666
+  }
+ ]
+}

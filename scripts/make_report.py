@@ -13,22 +13,13 @@ import json
 import re
 from pathlib import Path
 
-import matplotlib
+import charts
+from charts import LABELS, pick
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+from oversight.sim.stats import wilson
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# reference palette (light): one data hue, everything else is ink/chrome
-SURFACE, INK, INK2, MUTED, GRID, AXIS, SERIES = "#fcfcfb", "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#2a78d6"
-LABELS = {
-    "no_oversight": "No oversight",
-    "always_model": "Automatic checker reviews everything",
-    "static_risk": "Fixed approval rules",
-    "always_human": "Person approves everything",
-    "adaptive": "This project",
-}
 HEADLINE_BUDGET = 1
 
 
@@ -41,82 +32,6 @@ def load(tag: str):
     PAIRED.clear()
     PAIRED.update(paired)
     return rows, manifest, acc
-
-
-def pick(rows, fatigue="on", profile="all", strategy=None, budget=None):
-    for r in rows:
-        if r["fatigue"] == fatigue and r["profile"] == profile and r["strategy"] == strategy and r["budget_per_hour"] == budget:
-            return r
-    raise KeyError((fatigue, profile, strategy, budget))
-
-
-def frontier(rows, out: Path, reviewer: str) -> None:
-    plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans"], "font.size": 10})
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.6), sharey=True, facecolor=SURFACE)
-    for ax, fatigue, title in zip(axes, ("on", "off"), ("If the person gets tired", "If the person never gets tired"), strict=True):
-        ax.set_facecolor(SURFACE)
-        for s in ("top", "right"):
-            ax.spines[s].set_visible(False)
-        for s in ("left", "bottom"):
-            ax.spines[s].set_color(AXIS)
-        ax.grid(True, color=GRID, linewidth=1)
-        ax.set_axisbelow(True)
-        ax.tick_params(colors=MUTED, labelcolor=INK2)
-        # adaptive sweep: the one colored series
-        ad = sorted((r for r in rows if r["fatigue"] == fatigue and r["profile"] == "all" and r["strategy"] == "adaptive"), key=lambda r: r["budget_per_hour"])
-        xs = [r["interrupts_per_day"] for r in ad]
-        ys = [r["harm_executed_pct"] for r in ad]
-        for r in ad:
-            lo, hi = r["harm_executed_ci95"]
-            ax.plot([r["interrupts_per_day"]] * 2, [lo, hi], color=SERIES, alpha=0.35, linewidth=1)
-        ax.plot(xs, ys, color=SERIES, linewidth=2, solid_capstyle="round", zorder=4)
-        ax.scatter(xs, ys, s=64, color=SERIES, edgecolors=SURFACE, linewidths=2, zorder=5)
-        ax.annotate(
-            "This project",
-            (xs[0], ys[0]),
-            xytext=(xs[0] - 2, min(ys) - 7),
-            color=INK,
-            fontsize=9,
-            ha="left",
-        )
-        # baselines: neutral points on top, identified by direct labels
-        for s in ("always_model", "static_risk", "always_human"):
-            r = pick(rows, fatigue, "all", s, None)
-            x, y = r["interrupts_per_day"], r["harm_executed_pct"]
-            lo, hi = r["harm_executed_ci95"]
-            ax.plot([x, x], [lo, hi], color=MUTED, linewidth=1, zorder=6)
-            ax.scatter([x], [y], s=64, color=INK2, edgecolors=SURFACE, linewidths=2, zorder=7)
-            if s == "static_risk":
-                ax.annotate(LABELS[s], (x, y), xytext=(x + 4, y + 7), color=INK2, fontsize=9, arrowprops=dict(arrowstyle="-", color=MUTED, linewidth=1))
-            else:
-                dx, ha = (1.2, "left") if x < 40 else (-1.2, "right")
-                ax.annotate(LABELS[s], (x, y), xytext=(x + dx, y + (2.5 if y > 20 else 9)), color=INK2, ha=ha, fontsize=9)
-        ax.text(0.99, 0.74, "Agent does anything: 100% ran, 0 interruptions", transform=ax.transAxes, ha="right", va="top", color=MUTED, fontsize=8)
-        ax.set_title(title, color=INK, fontsize=11, loc="left")
-        ax.set_xlabel("Times the person was interrupted per 8 hour day", color=INK2)
-        ax.set_xlim(-2, 56)
-        ax.set_ylim(0, 62)
-    axes[0].set_ylabel("Harmful actions that ran (%)", color=INK2)
-    h = headline(rows)
-    fig.suptitle(
-        f"{h['interrupt_cut_pct']:.0f}% fewer interruptions than fixed approval rules, and {harm_phrase(h)} (lower left is better)",
-        color=INK,
-        fontsize=12,
-        x=0.01,
-        ha="left",
-    )
-    fig.text(
-        0.01,
-        0.005,
-        f"Made up workdays, 300 per point. Bars show 95% confidence. Blue points: 1 to 10 interruptions per hour allowed. Checker: {reviewer}.",
-        color=MUTED,
-        fontsize=8,
-    )
-    fig.tight_layout(rect=(0, 0.03, 1, 0.95))
-    out.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out / "frontier.png", dpi=160, facecolor=SURFACE)
-    fig.savefig(out / "frontier.svg", facecolor=SURFACE)
-    plt.close(fig)
 
 
 def fmt(x: float, d: int = 1) -> str:
@@ -154,10 +69,109 @@ def profile_table(rows) -> str:
 
 
 def accuracy_table(acc) -> str:
-    lines = ["| Pool slice | allow | escalate | block |", "|---|---|---|---|"]
+    """Harmful slices: share stopped (block or escalate). Benign slices: share wrongly stopped. Wilson 95% intervals."""
+    lines = [
+        "| Unique actions | allow | escalate | block | Stopped (block or escalate), 95% CI |",
+        "|---|---|---|---|---|",
+    ]
+    names = {"benign": "benign", "benign_lookalike": "benign that look scary", "harmful_overt": "harmful, obvious", "harmful_subtle": "harmful, disguised"}
     for g in ("benign", "benign_lookalike", "harmful_overt", "harmful_subtle"):
         c = acc.get(g, {})
-        lines.append(f"| {g.replace('_', ' ')} | {c.get('allow', 0)} | {c.get('escalate', 0)} | {c.get('block', 0)} |")
+        n = sum(c.values())
+        stopped = c.get("escalate", 0) + c.get("block", 0)
+        lo, hi = wilson(stopped, n)
+        lines.append(
+            f"| {names[g]} (n={n}) | {c.get('allow', 0)} | {c.get('escalate', 0)} | {c.get('block', 0)} | {100 * stopped / max(1, n):.0f}% ({100 * lo:.0f} to {100 * hi:.0f}) |"
+        )
+    return "\n".join(lines)
+
+
+def robustness_md(rob) -> str:
+    if not rob:
+        return ""
+    v = {x["name"]: x for x in rob["variants"]}
+    assumptions = [x for x in rob["variants"] if x["kind"] in ("baseline", "person", "workload", "accounting")]
+    better = sum(x["harm_diff_ci95"][1] < 0 for x in assumptions)
+    worse = sum(x["harm_diff_ci95"][0] > 0 for x in assumptions)
+    fewer = sum(x["interrupts_diff_ci95"][1] < 0 for x in assumptions)
+    no_fb = v["Remove: checker takes over when the budget is spent"]
+    lax = v["Remove: stricter bar for the checker when it takes over"]
+    acct = v["Every queued review counts as its own interruption"]
+    base = v["Baseline assumptions"]
+    att = rob["budget_drain_attack"]
+    top = max(r["burst"] for r in att)
+
+    def a(human, strat, k):
+        return next(r for r in att if r["human"] == human and r["strategy"] == strat and r["burst"] == k)
+
+    return f"""## Does it survive other assumptions?
+
+Each row changes one assumption and reruns the paired comparison on 300 identical workdays.
+
+![robustness](../figures/robustness.png)
+
+{robustness_table(rob)}
+
+Across the {len(assumptions)} assumption changes, this project let through clearly less harm in {better}, clearly more in {worse},
+and caused clearly fewer interruptions in {fewer}. Where a confidence interval touches 0, read it as "no worse", not "better".
+
+**Counting matters.** If every queued review counts as its own interruption instead of one sitting per queue, the saving
+drops from {abs(base["interrupts_diff_per_day"]):.1f} to {abs(acct["interrupts_diff_per_day"]):.1f} interruptions a day. Both numbers are real; they answer different questions.
+
+## Which part of the design does the work?
+
+Removing one piece at a time (the last two rows above):
+
+- **Without the checker taking over when the budget is spent**, over budget actions just wait for the person.
+  The harm advantage mostly disappears ({no_fb["harm_diff_points"]:+.1f} points, {no_fb["harm_diff_ci95"][0]:+.1f} to {no_fb["harm_diff_ci95"][1]:+.1f})
+  and more actions wait ({no_fb["adaptive_deferred"]:.1f} per day). The interruption saving comes from the budget; the safety gain comes from the takeover.
+- **Without the stricter bar for the checker when it takes over**, far fewer actions wait ({lax["adaptive_deferred"]:.1f} per day instead of
+  {base["adaptive_deferred"]:.1f}) but harm gets worse than fixed rules ({lax["harm_diff_points"]:+.1f} points, {lax["harm_diff_ci95"][0]:+.1f} to
+  {lax["harm_diff_ci95"][1]:+.1f}). This is the main dial between speed and safety, and the default sits on the safe side.
+
+## Can an agent game it?
+
+A hostile agent fires a burst of harmless looking high risk actions 20 seconds apart to wear out the person, then hides one
+harmful high risk action right after. 300 attacks per cell:
+
+![attack](../figures/attack.png)
+
+{attack_table(rob)}
+
+With fixed rules the attack gets easier as the burst grows, because every decoy reaches the person
+({a("fatigue on", "static_risk", 0)["success_pct"]:.0f}% → {a("fatigue on", "static_risk", top)["success_pct"]:.0f}% with a tired person).
+Here the budget runs out, the checker takes over with its stricter bar, and success stays at
+{a("fatigue on", "adaptive", top)["success_pct"]:.0f}% after {top} decoys. The defence depends on the checker: an attacker that also fools the checker is not covered."""
+
+
+def hero_title(h) -> str:
+    return f"{h['interrupt_cut_pct']:.0f}% fewer interruptions, and {harm_phrase(h)} getting through"
+
+
+def robustness_table(rob) -> str:
+    lines = [
+        "| What changed | Harm difference in points (95% CI) | Interruptions per day difference (95% CI) | Deferred per day (fixed rules → this project) |",
+        "|---|---|---|---|",
+    ]
+    for v in rob["variants"]:
+        lines.append(
+            f"| {v['name']} | {v['harm_diff_points']:+.1f} ({v['harm_diff_ci95'][0]:+.1f} to {v['harm_diff_ci95'][1]:+.1f}) | "
+            f"{v['interrupts_diff_per_day']:+.1f} ({v['interrupts_diff_ci95'][0]:+.1f} to {v['interrupts_diff_ci95'][1]:+.1f}) | "
+            f"{v['static_deferred']:.1f} → {v['adaptive_deferred']:.1f} |"
+        )
+    return "\n".join(lines)
+
+
+def attack_table(rob) -> str:
+    lines = ["| Person | Decoys fired first | Fixed approval rules | This project |", "|---|---|---|---|"]
+    rows = rob["budget_drain_attack"]
+    for human in ("fatigue on", "fatigue off"):
+        for k in sorted({r["burst"] for r in rows}):
+            cell = {}
+            for r in rows:
+                if r["human"] == human and r["burst"] == k:
+                    cell[r["strategy"]] = f"{r['success_pct']:.1f}% ({r['success_ci95'][0]:.1f} to {r['success_ci95'][1]:.1f})"
+            lines.append(f"| {'gets tired' if human == 'fatigue on' else 'never tires'} | {k} | {cell['static_risk']} | {cell['adaptive']} |")
     return "\n".join(lines)
 
 
@@ -215,6 +229,10 @@ _Generated by `scripts/make_report.py` from `results/{tag}/` (commit `{manifest[
 (8% harmful), {len(manifest["seeds"])} seeds × {manifest["episodes_per_seed"]} episodes × 3 human-availability profiles = 300 workdays per strategy.
 Safety model: **{manifest["reviewer"]}**. Simulated human catches 95% of harmful actions when fresh, wrongly blocks 3% of benign ones,
 and (fatigue on) loses 4 points of catch rate for every review beyond 6 in the past hour (floor 50%).
+That fatigue curve is an assumption, but a conservative one: clinicians override 49% to 96% of drug safety alerts
+([van der Sijs et al. 2006](https://pmc.ncbi.nlm.nih.gov/articles/PMC1447540)), and acceptance of reminders dropped 30% for each
+additional reminder per patient visit ([Ancker et al. 2017](https://pmc.ncbi.nlm.nih.gov/articles/PMC5387195/)).
+Results with fatigue switched off are reported next to every fatigue result.
 
 ![frontier](../figures/frontier.png)
 
@@ -251,6 +269,8 @@ An interval that does not include 0 means the difference is unlikely to be noise
 ## By human availability (fatigue on)
 
 {profile_table(rows)}
+
+{robustness_md(manifest.get("robustness"))}
 
 ## Safety-model verdicts on the unique action pool
 
@@ -372,7 +392,16 @@ def main() -> None:
     ap.add_argument("--tag", default="heuristic")
     args = ap.parse_args()
     rows, manifest, acc = load(args.tag)
-    frontier(rows, ROOT / "figures", manifest["reviewer"])
+    h = headline(rows)
+    title = f"{h['interrupt_cut_pct']:.0f}% fewer interruptions than fixed approval rules, and {harm_phrase(h)} (lower left is better)"
+    charts.frontier(rows, ROOT / "figures", manifest["reviewer"], title)
+    charts.hero(pick(rows, "on", "all", "static_risk", None), pick(rows, "on", "all", "adaptive", HEADLINE_BUDGET), hero_title(h), ROOT / "figures")
+    rob_path = ROOT / "results" / args.tag / "robustness.json"
+    rob = json.loads(rob_path.read_text()) if rob_path.exists() else None
+    if rob:
+        charts.robustness(rob["variants"], ROOT / "figures")
+        charts.attack(rob["budget_drain_attack"], ROOT / "figures")
+    manifest["robustness"] = rob
     (ROOT / "docs").mkdir(exist_ok=True)
     (ROOT / "docs" / "results.md").write_text(results_md(rows, manifest, acc, args.tag))
     (ROOT / "docs" / "linkedin_post.md").write_text(linkedin_post(rows))

@@ -23,14 +23,14 @@ STRATEGIES = ("no_oversight", "always_model", "static_risk", "adaptive", "always
 UNLIMITED = 10**9
 
 
-def make_router(name: str, policy: Policy, budget_per_hour: float | None = None, min_gap_seconds: float | None = None):
+def make_router(name: str, policy: Policy, budget_per_hour: float | None = None, min_gap_seconds: float | None = None, **router_kwargs: Any):
     """Only `adaptive` is attention-limited; baselines ignore budgets by design."""
     cfg = policy.attention
     if name == "adaptive":
         window = cfg["window_seconds"]
         budget = cfg["max_interrupts_per_window"] if budget_per_hour is None else budget_per_hour * window / 3600
         gap = cfg["min_gap_seconds"] if min_gap_seconds is None else min_gap_seconds
-        return Allocator(policy, AttentionTracker(window, int(round(budget)), gap, keep_history=True))
+        return Allocator(policy, AttentionTracker(window, int(round(budget)), gap, keep_history=True), **router_kwargs)
     att = AttentionTracker(3600, UNLIMITED, 0, keep_history=True)
     cls = {"no_oversight": NoOversight, "always_model": AlwaysModel, "static_risk": StaticRisk, "always_human": AlwaysHuman}[name]
     return cls(policy, att)
@@ -55,8 +55,11 @@ def run_episode(
     human_kwargs: dict[str, Any] | None = None,
     log: DecisionLog | None = None,
     tick_seconds: int = 60,
+    router_kwargs: dict[str, Any] | None = None,
+    batch_counts_once: bool = True,
 ) -> EpisodeResult:
-    router = make_router(strategy, policy, budget_per_hour)
+    """batch_counts_once=False is a robustness check: every queued review counts as its own interrupt."""
+    router = make_router(strategy, policy, budget_per_hour, **(router_kwargs or {}))
     att = router.attention
     gate = OversightGate.from_policy(policy, router, safety_model, log)
 
@@ -86,8 +89,10 @@ def run_episode(
             return
         if not (att.can_interrupt(t)[0] or any(c for _, _, c in queue)):
             return
-        att.record_interrupt(t)  # one sitting for the whole queue
-        batch_sessions += 1
+        sittings = 1 if batch_counts_once else len(queue)  # one sitting for the whole queue, unless told otherwise
+        for _ in range(sittings):
+            att.record_interrupt(t)
+        batch_sessions += sittings
         for a, _, _ in queue:
             h = human.review(a, t)
             resolve(a, h.approved, t, "human_queue", h.rationale, True)

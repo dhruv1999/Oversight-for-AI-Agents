@@ -5,3 +5,4 @@ __pycache__/
 logs/
 .cache/
 .oversight/
+results/*_quick/

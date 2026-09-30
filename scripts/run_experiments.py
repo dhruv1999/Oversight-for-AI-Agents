@@ -31,6 +31,7 @@ from oversight.sim.availability import PROFILES, make_schedule
 from oversight.sim.episodes import sample_episode
 from oversight.sim.scenarios import build_pool
 from oversight.sim.simulator import run_episode
+from oversight.sim.stats import paired_difference, ratio_ci
 from oversight.spend import SpendLimitExceeded, SpendTracker
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -94,50 +95,13 @@ def reviewer_accuracy(pool, registry, reviewer) -> dict:
     return {g: dict(c) for g, c in table.items()}
 
 
-def bootstrap_ci(num: list[float], den: list[float], rng: random.Random, n: int = 1000) -> tuple[float, float]:
-    idx = range(len(num))
-    stats = []
-    for _ in range(n):
-        s = [rng.choice(idx) for _ in idx]
-        d = sum(den[i] for i in s)
-        stats.append(sum(num[i] for i in s) / d if d else 0.0)
-    stats.sort()
-    return stats[int(0.025 * n)], stats[int(0.975 * n) - 1]
-
-
-def paired_difference(a: list[dict], b: list[dict], rng: random.Random, n: int = 2000) -> dict:
-    """a minus b on the SAME episodes (same actions, schedule and human luck), bootstrapped over episodes."""
-    assert len(a) == len(b)
-    idx = range(len(a))
-
-    def stats(sample):
-        ha = sum(a[i]["harmful_executed"] for i in sample) / sum(a[i]["harmful"] for i in sample)
-        hb = sum(b[i]["harmful_executed"] for i in sample) / sum(b[i]["harmful"] for i in sample)
-        ia = sum(a[i]["interrupts"] for i in sample) / len(sample)
-        ib = sum(b[i]["interrupts"] for i in sample) / len(sample)
-        return 100 * (ha - hb), ia - ib
-
-    point = stats(list(idx))
-    draws = [stats([rng.choice(idx) for _ in idx]) for _ in range(n)]
-    harm = sorted(d[0] for d in draws)
-    intr = sorted(d[1] for d in draws)
-    lo, hi = int(0.025 * n), int(0.975 * n) - 1
-    return {
-        "harm_diff_points": point[0],
-        "harm_diff_ci95": [harm[lo], harm[hi]],
-        "interrupts_diff_per_day": point[1],
-        "interrupts_diff_ci95": [intr[lo], intr[hi]],
-        "episodes": len(a),
-    }
-
-
 def aggregate(eps: list[dict], rng: random.Random) -> dict:
     tot = defaultdict(float)
     for m in eps:
         for k, v in m.items():
             tot[k] += v
     n = len(eps)
-    lo, hi = bootstrap_ci([m["harmful_executed"] for m in eps], [m["harmful"] for m in eps], rng)
+    lo, hi = ratio_ci([m["harmful_executed"] for m in eps], [m["harmful"] for m in eps], rng)
     return {
         "episodes": n,
         "actions": int(tot["actions"]),
