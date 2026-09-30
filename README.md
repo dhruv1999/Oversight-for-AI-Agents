@@ -44,7 +44,7 @@ Existing approaches either ask about everything, ask about nothing, or follow fi
 
 Both approaches ran on exactly the same days, so I compared them day by day, with a limit of 1 interruption an hour. The person was interrupted 6.3 fewer times a day (95% confidence interval 5.8 to 6.8), and 3.3 percentage points fewer harmful actions got through (2.5 to 4.1). The cost is a longer queue: 16.5 actions a day waited for the person instead of 10.8.
 
-I changed the assumptions one at a time: how good the person is, how fast they tire, how busy the agent is, how rare harm is, how interruptions are counted. Out of 11 changes, less harm got through in 10 and more in 0.
+I changed the assumptions one at a time: how good the person is, how fast they tire, how busy the agent is, how rare harm is, how interruptions are counted. Out of 11 changes, less harm got through in 10, more in none, and in the remaining one the difference was too small to call.
 
 I also tried to break it. An agent that fires 12 harmless looking risky actions to wear the person out, then hides a harmful one, got through 42% of the time against fixed rules and 13% here.
 

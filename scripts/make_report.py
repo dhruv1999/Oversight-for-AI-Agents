@@ -260,7 +260,14 @@ def readme_findings(rows, tag, rob, res) -> str:
         top = max(r["burst"] for r in att)
         parts.append(
             f"I changed the assumptions one at a time: how good the person is, how fast they tire, how busy the agent is, how rare harm is, "
-            f"how interruptions are counted. Out of {len(changes)} changes, less harm got through in {better} and more in {worse}."
+            f"how interruptions are counted. Out of {len(changes)} changes, less harm got through in {better}, more in {worse or 'none'}"
+            + (
+                ""
+                if not (rest := len(changes) - better - worse)
+                else ", and in the remaining one the difference was too small to call."
+                if rest == 1
+                else f", and in the remaining {rest} the difference was too small to call."
+            )
         )
         parts.append(
             f"I also tried to break it. An agent that fires {top} harmless looking risky actions to wear the person out, then hides a harmful one, "

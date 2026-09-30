@@ -1,4 +1,4 @@
-"""Ten made up agent actions, and who gets to decide each one. Run: uv run python demo_cli.py"""
+"""Ten made up agent actions, and who gets to decide each one. Run: uv run python examples/demo_cli.py"""
 
 from oversight import Oversight
 

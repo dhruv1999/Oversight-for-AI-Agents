@@ -53,7 +53,7 @@ def _setup() -> None:
 def hero(static: dict[str, Any], adaptive: dict[str, Any], title: str, out: Path) -> None:
     """The picture a busy reader sees first: two numbers, before and after."""
     _setup()
-    fig, axes = plt.subplots(1, 2, figsize=(10, 2.5), facecolor=SURFACE)
+    fig, axes = plt.subplots(1, 2, figsize=(10, 2.1), facecolor=SURFACE)
     panels = [
         ("Times a person is interrupted, per day", "interrupts_per_day", "{:.1f}"),
         ("Harmful actions that got through", "harm_executed_pct", "{:.1f}%"),
@@ -69,8 +69,8 @@ def hero(static: dict[str, Any], adaptive: dict[str, Any], title: str, out: Path
         ax.spines["bottom"].set_visible(False)
         ax.set_xlim(0, max(vals) * 1.25)
         ax.set_title(label, color=INK2, fontsize=10, loc="left")
-    fig.suptitle(title, color=INK, fontsize=13, x=0.01, ha="left")
-    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    fig.suptitle(title, color=INK, fontsize=13, x=0.01, y=0.98, ha="left")
+    fig.tight_layout(rect=(0, 0, 1, 0.9), h_pad=0.2)
     _save(fig, out, "hero")
 
 
