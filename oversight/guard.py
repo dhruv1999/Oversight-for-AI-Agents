@@ -10,9 +10,8 @@ elif check.needs_person: ask_someone(check.explain())
 
 from __future__ import annotations
 
-import itertools
-import threading
 import time
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,6 +26,7 @@ from .policy import Policy
 from .registry import ToolRegistry
 from .safety_model import HeuristicSafetyModel, SafetyModel
 from .schema import Action
+from .store import FileStore, MemoryStore, StateStore
 
 
 @dataclass(frozen=True)
@@ -73,7 +73,9 @@ class Check:
 class Oversight:
     """Default rules, a free rule based checker, and an interrupt budget from the policy file.
 
-    Thread safe. Wall clock time is read here, at the edge; the routing core never reads a clock.
+    Thread safe. Pass `state=".oversight"` (or any StateStore) to share one person's interrupt budget
+    across processes; by default the budget lives in this process. Wall clock time is read here, at
+    the edge; the routing core never reads a clock.
     """
 
     def __init__(
@@ -83,16 +85,23 @@ class Oversight:
         safety_model: SafetyModel | None = None,
         log_path: str | Path | None = None,
         clock: Callable[[], float] = time.time,
+        state: str | Path | StateStore | None = None,
     ):
         self.policy = Policy.load(policy)
         self.registry = ToolRegistry.load(tools, self.policy)
-        self.attention = AttentionTracker.from_config(self.policy.attention)
-        self.gate = OversightGate.from_policy(
-            self.policy, Allocator(self.policy, self.attention), safety_model or HeuristicSafetyModel(), DecisionLog(log_path) if log_path else None
-        )
+        self.safety_model = safety_model or HeuristicSafetyModel()
+        self.log = DecisionLog(log_path) if log_path else None
+        self.store: StateStore = FileStore(state) if isinstance(state, (str, Path)) else (state or MemoryStore())
+        self.rules_id = f"{self.policy.fingerprint}+{self.registry.fingerprint}"
         self._clock = clock
-        self._lock = threading.Lock()
-        self._ids = itertools.count(1)
+
+    def _gate(self, state: dict[str, Any], now: float) -> tuple[OversightGate, AttentionTracker]:
+        att = AttentionTracker.from_config(self.policy.attention)
+        att.restore(t for t in state["interrupt_times"] if now - t < att.window_seconds)
+        att.set_available(state["available"])
+        gate = OversightGate.from_policy(self.policy, Allocator(self.policy, att), self.safety_model, self.log)
+        gate.rules_id = self.rules_id
+        return gate, att
 
     @classmethod
     def with_claude(
@@ -118,19 +127,30 @@ class Oversight:
         return cls(safety_model=checker, **kwargs)
 
     def check(self, tool: str, params: dict[str, Any] | None = None, description: str = "", call_id: str | None = None, now: float | None = None) -> Check:
-        with self._lock:
-            action = self.registry.to_action(call_id or f"call-{next(self._ids)}", tool, dict(params or {}), description or f"call {tool}")
-            return Check(action, self.gate.review(action, self._clock() if now is None else now))
+        """Decide who must approve this tool call. Records the interrupt if a person is asked."""
+        action = self.registry.to_action(call_id or f"call-{uuid.uuid4().hex[:12]}", tool, dict(params or {}), description or f"call {tool}")
+        with self.store.transaction() as state:
+            t = self._clock() if now is None else now
+            gate, att = self._gate(state, t)
+            result = gate.review(action, t)
+            state["interrupt_times"] = att.interrupt_times()
+        return Check(action, result)
 
     def record_answer(self, check: Check, approved: bool, note: str = "", now: float | None = None) -> None:
         """Log what the person decided (for the audit trail)."""
-        with self._lock:
-            self.gate.record_human(check.action, approved, self._clock() if now is None else now, note, queued=check.waiting)
+        with self.store.transaction() as state:
+            t = self._clock() if now is None else now
+            gate, _ = self._gate(state, t)
+            gate.record_human(check.action, approved, t, note, queued=check.waiting)
 
     def person_away(self) -> None:
-        with self._lock:
-            self.attention.set_available(False)
+        with self.store.transaction() as state:
+            state["available"] = False
 
     def person_back(self) -> None:
-        with self._lock:
-            self.attention.set_available(True)
+        with self.store.transaction() as state:
+            state["available"] = True
+
+    def is_person_available(self) -> bool:
+        with self.store.transaction() as state:
+            return bool(state["available"])

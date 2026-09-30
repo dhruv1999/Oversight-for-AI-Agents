@@ -7,6 +7,7 @@ param-inspecting rules that can only ever raise risk.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -49,6 +50,7 @@ class ToolRegistry:
         self.tools = tools
         self.unknown = unknown
         self.rules = rules
+        self.fingerprint = ""
         for name, meta in [*tools.items(), ("unknown_tool", unknown)]:
             self._validate(name, meta, full=True)
         for r in rules:
@@ -64,7 +66,8 @@ class ToolRegistry:
 
     @classmethod
     def load(cls, path: str | Path, policy: Policy) -> ToolRegistry:
-        raw = yaml.safe_load(Path(path).read_text())
+        text = Path(path).read_text()
+        raw = yaml.safe_load(text)
         rules = []
         for r in raw.get("rules") or []:
             tool = r.get("tool")
@@ -78,7 +81,9 @@ class ToolRegistry:
                     set=dict(r["set"]),
                 )
             )
-        return cls(policy, raw["tools"], raw["unknown_tool"], rules)
+        reg = cls(policy, raw["tools"], raw["unknown_tool"], rules)
+        reg.fingerprint = hashlib.sha256(text.encode()).hexdigest()[:12]
+        return reg
 
     def to_action(self, id: str, tool: str, params: dict[str, Any], description: str) -> Action:
         known = tool in self.tools

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
@@ -41,10 +42,12 @@ class Policy:
     overrides: tuple[dict[str, Any], ...]
     attention: dict[str, int]
     safety_model: dict[str, Any] = field(default_factory=dict)
+    fingerprint: str = ""  # sha256 of the policy file, so every logged decision names the rules that made it
 
     @classmethod
     def load(cls, path: str | Path) -> Policy:
-        raw = yaml.safe_load(Path(path).read_text())
+        text = Path(path).read_text()
+        raw = yaml.safe_load(text)
         try:
             weights = raw["weights"]
             for dim in DIMENSIONS:
@@ -58,6 +61,14 @@ class Policy:
         mins = [tiers[t] for t in sorted(Tier)]
         if mins != sorted(set(mins)):
             raise PolicyError("tier thresholds must be strictly increasing")
+        att = raw.get("attention") or {}
+        missing = {"window_seconds", "max_interrupts_per_window", "min_gap_seconds"} - set(att)
+        if missing:
+            raise PolicyError(f"attention section missing {sorted(missing)}")
+        for k in ("min_allow_confidence", "degraded_min_allow_confidence"):
+            v = (raw.get("safety_model") or {}).get(k, 0.5)
+            if not isinstance(v, (int, float)) or not 0 <= v <= 1:
+                raise PolicyError(f"safety_model.{k} must be between 0 and 1")
         overrides = tuple(raw.get("overrides") or ())
         for o in overrides:
             cls._check_override(o, weights)
@@ -68,6 +79,7 @@ class Policy:
             overrides,
             dict(raw.get("attention") or {}),
             dict(raw.get("safety_model") or {}),
+            hashlib.sha256(text.encode()).hexdigest()[:12],
         )
 
     @staticmethod

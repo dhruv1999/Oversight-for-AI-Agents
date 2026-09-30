@@ -169,18 +169,18 @@ def _hook_call(args):
     state_dir, i = args
     import time
 
-    from oversight.integrations import claude_code_hook as hook
+    from oversight import store
+    from oversight.integrations.claude_code_hook import handle
     from oversight.safety_model import HeuristicSafetyModel
 
-    real_load = hook._load_state
+    real_read = store.FileStore._read
 
-    def slow_load(path):  # widen the read-modify-write window so a missing lock shows up reliably
-        state = real_load(path)
+    def slow_read(self):  # widen the read, decide, write window so a missing lock shows up reliably
+        state = real_read(self)
         time.sleep(0.05)
         return state
 
-    hook._load_state = slow_load
-    handle = hook.handle
+    store.FileStore._read = slow_read
 
     payload = {"tool_name": "Write", "tool_input": {"file_path": "~/.ssh/config", "content": "IdentityFile ~/.ssh/k_private_key"}, "tool_use_id": f"p{i}"}
     return handle(payload, Path(state_dir), 1000.0 + i, "advisory", HeuristicSafetyModel())["hookSpecificOutput"]["permissionDecision"]

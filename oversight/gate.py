@@ -27,6 +27,9 @@ class Router(Protocol):
     def escalate(self, decision: Decision, now: float, why: str) -> Decision: ...
 
 
+LOG_VERSION = 1
+
+
 class Outcome(str, Enum):
     EXECUTE = "execute"
     BLOCK = "block"
@@ -56,11 +59,14 @@ class OversightGate:
         self.min_allow_confidence = min_allow_confidence
         self.degraded_min_allow_confidence = degraded_min_allow_confidence
         self.log = log
+        self.rules_id = ""  # fingerprint of the policy (and tool registry) that made the decisions
 
     @classmethod
     def from_policy(cls, policy: Policy, router: Router, safety_model: SafetyModel | None, log: DecisionLog | None = None) -> OversightGate:
         cfg = policy.safety_model
-        return cls(router, safety_model, cfg.get("min_allow_confidence", 0.6), cfg.get("degraded_min_allow_confidence", 0.85), log)
+        gate = cls(router, safety_model, cfg.get("min_allow_confidence", 0.6), cfg.get("degraded_min_allow_confidence", 0.85), log)
+        gate.rules_id = policy.fingerprint
+        return gate
 
     def review(self, action: Action, now: float) -> GateResult:
         d = self.router.decide(action, now)
@@ -95,7 +101,18 @@ class OversightGate:
 
     def record_human(self, action: Action, approved: bool, now: float, rationale: str = "", queued: bool = False) -> None:
         if self.log:
-            self.log.write({"event": "human", "action_id": action.id, "approved": approved, "timestamp": now, "rationale": rationale, "queued": queued})
+            self.log.write(
+                {
+                    "log_version": LOG_VERSION,
+                    "rules": self.rules_id,
+                    "event": "human",
+                    "action_id": action.id,
+                    "approved": approved,
+                    "timestamp": now,
+                    "rationale": rationale,
+                    "queued": queued,
+                }
+            )
 
     def _log(self, event: str, action: Action, res: GateResult) -> None:
         if not self.log:
@@ -103,7 +120,15 @@ class OversightGate:
         act = asdict(action)
         act["params"] = redact(act["params"])
         act["description"] = redact_text(act["description"])
-        rec: dict[str, Any] = {"event": event, "router": self.router.name, "action": act, "outcome": res.outcome.value, "reason": res.reason}
+        rec: dict[str, Any] = {
+            "log_version": LOG_VERSION,
+            "rules": self.rules_id,
+            "event": event,
+            "router": self.router.name,
+            "action": act,
+            "outcome": res.outcome.value,
+            "reason": res.reason,
+        }
         rec.update(res.decision.to_dict())
         rec["verdict"] = res.verdict.to_dict() if res.verdict else None
         self.log.write(rec)
