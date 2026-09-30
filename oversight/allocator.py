@@ -35,10 +35,8 @@ class Allocator:
             if ok and self.pacing:
                 bar = self._pacing_bar(now)
                 if a.score < bar:
-                    ok, why = (
-                        False,
-                        f"pacing: score {a.score} below {bar:.1f} while the budget is {self.attention.interrupts_in_window(now)}/{self.attention.max_interrupts} used",
-                    )
+                    used = f"{self.attention.interrupts_in_window(now)}/{self.attention.max_interrupts}"
+                    ok, why = False, f"pacing: score {a.score} below {bar:.1f} with {used} of the budget used"
             if ok:
                 route = Route.HUMAN
                 reasons.append(f"high risk: escalate to human ({why})")
