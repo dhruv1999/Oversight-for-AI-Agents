@@ -5,6 +5,7 @@ The gate never talks to the human itself; the caller owns that channel (console,
 approval, Claude Code permission prompt, or a simulated human) and reports back via
 record_human(). Every step is written to the audit log.
 """
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass

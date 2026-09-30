@@ -1,4 +1,5 @@
 """Guardrails for the project's design rules; they fail if someone breaks them."""
+
 import ast
 import re
 from pathlib import Path

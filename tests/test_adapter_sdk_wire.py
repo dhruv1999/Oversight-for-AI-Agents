@@ -1,5 +1,6 @@
 """Drives the real anthropic SDK against a local stub server: proves the SDK accepts our kwargs
 and shows the exact JSON body + beta header that would go to the API. No network, no spend."""
+
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -13,9 +14,13 @@ from oversight.safety_model import VERDICT_SCHEMA  # noqa: E402
 
 CAPTURED = {}
 REPLY = {
-    "id": "msg_stub", "type": "message", "role": "assistant", "model": "claude-opus-5-5",
+    "id": "msg_stub",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-opus-5-5",
     "content": [{"type": "text", "text": '{"verdict":"block","confidence":0.9,"rationale":"x"}'}],
-    "stop_reason": "end_turn", "stop_sequence": None,
+    "stop_reason": "end_turn",
+    "stop_sequence": None,
     "usage": {"input_tokens": 321, "output_tokens": 45},
 }
 

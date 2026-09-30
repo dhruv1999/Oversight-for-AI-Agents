@@ -16,6 +16,7 @@ Modes (env OVERSIGHT_MODE):
 Fails safe: any internal error produces "ask", never "allow".
 State (attention budget, audit log, deferred queue) lives in $OVERSIGHT_STATE_DIR (default .oversight/).
 """
+
 from __future__ import annotations
 
 import json
@@ -116,7 +117,13 @@ def main() -> None:
         state_dir = Path(os.environ.get("OVERSIGHT_STATE_DIR", Path(payload.get("cwd", ".")) / ".oversight"))
         out = handle(payload, state_dir, time.time(), os.environ.get("OVERSIGHT_MODE", "advisory"))
     except Exception as e:  # never fail open
-        out = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask", "permissionDecisionReason": f"oversight hook error ({type(e).__name__}): {e}"}}
+        out = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
+                "permissionDecisionReason": f"oversight hook error ({type(e).__name__}): {e}",
+            }
+        }
     json.dump(out, sys.stdout)
 
 

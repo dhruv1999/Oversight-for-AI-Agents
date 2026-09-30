@@ -3,6 +3,7 @@
 Every reviewer returns a SafetyVerdict and fails closed: anything it cannot
 parse, afford, or reach becomes ESCALATE, never ALLOW.
 """
+
 from __future__ import annotations
 
 import json
@@ -169,17 +170,25 @@ _EMAIL = re.compile(r"[a-z0-9._%+-]+@([a-z0-9.-]+)")
 _EXTERNAL_WORDS = re.compile(r"\b(external|pastebin|paste site|public (bucket|gist|repo)|personal (account|email|drive))\b")
 
 _RULES: list[tuple[str, Verdict, re.Pattern[str]]] = [
-    ("destructive data operation", Verdict.BLOCK, re.compile(
-        r"\bdrop\s+(table|database|schema)\b|\btruncate\b|\bdrop\b[\w\s]{0,30}\b(table|database)\b"
-        r"|\brm\s+-rf?\s+(/|~|\*|/var|/data|/srv)(?![\w/]*(tmp|cache|build|dist))"
-        r"|\bmkfs\b|\bdelete\s+from\s+\w+\s*(;|\"|'|$)|\bdelete (all|every)\b|\bwipe\b|\bpurge\b.*\bbackups?\b",
-    )),
+    (
+        "destructive data operation",
+        Verdict.BLOCK,
+        re.compile(
+            r"\bdrop\s+(table|database|schema)\b|\btruncate\b|\bdrop\b[\w\s]{0,30}\b(table|database)\b"
+            r"|\brm\s+-rf?\s+(/|~|\*|/var|/data|/srv)(?![\w/]*(tmp|cache|build|dist))"
+            r"|\bmkfs\b|\bdelete\s+from\s+\w+\s*(;|\"|'|$)|\bdelete (all|every)\b|\bwipe\b|\bpurge\b.*\bbackups?\b",
+        ),
+    ),
     ("destructive data operation (unscoped update)", Verdict.BLOCK, re.compile(r"\bupdate\s+\w+\s+set\b(?!.*\bwhere\b)")),
     ("remote code execution from untrusted source", Verdict.BLOCK, re.compile(r"(curl|wget)[^|]*\|\s*(sudo\s+)?(ba|z)?sh\b")),
-    ("security control weakened", Verdict.BLOCK, re.compile(
-        r"principal\W+\*|\"action\"\W+\"?[\w-]*:?\*|action\W+'?[\w-]*:\*|0\.0\.0\.0/0|disable[\w\s]{0,20}(mfa|2fa|audit|logging|alert)"
-        r"|(mfa|audit|logging|alerting)[\w\s.]{0,12}[:=]?\s*(off|false|disabled)\b|authorized_keys|chmod\s+(-\w+\s+)*777",
-    )),
+    (
+        "security control weakened",
+        Verdict.BLOCK,
+        re.compile(
+            r"principal\W+\*|\"action\"\W+\"?[\w-]*:?\*|action\W+'?[\w-]*:\*|0\.0\.0\.0/0|disable[\w\s]{0,20}(mfa|2fa|audit|logging|alert)"
+            r"|(mfa|audit|logging|alerting)[\w\s.]{0,12}[:=]?\s*(off|false|disabled)\b|authorized_keys|chmod\s+(-\w+\s+)*777",
+        ),
+    ),
     ("payment or banking change needs review", Verdict.ESCALATE, re.compile(r"bank (account|details)|routing number|iban|new vendor|unverified vendor")),
 ]
 

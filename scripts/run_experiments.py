@@ -7,6 +7,7 @@
 
 Settings below were fixed before the comparative results were looked at.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -61,8 +62,10 @@ def make_reviewer(args, pool, policy, registry):
     todo = [a for a in actions if not model.is_cached(a)]
     est_in = sum((len(SYSTEM_PROMPT) + len(build_user_prompt(a))) // 3 + 50 for a in todo)
     print(f"[llm] {len(actions)} unique actions, {len(actions) - len(todo)} cached, {len(todo)} to review with {args.model}")
-    print(f"[llm] estimated input ~{est_in:,} tok; cost ~${cost_usd(args.model, est_in, 600 * len(todo)):.2f} "
-          f"(assumes ~600 output tok each), worst case ${cost_usd(args.model, est_in, client.max_tokens * len(todo)):.2f}")
+    print(
+        f"[llm] estimated input ~{est_in:,} tok; cost ~${cost_usd(args.model, est_in, 600 * len(todo)):.2f} "
+        f"(assumes ~600 output tok each), worst case ${cost_usd(args.model, est_in, client.max_tokens * len(todo)):.2f}"
+    )
     if args.estimate:
         sys.exit(0)
     model.spend = SpendTracker.from_env(default=1.0, ledger_path=ROOT / "cache" / "spend_ledger.jsonl")

@@ -1,6 +1,6 @@
 from oversight.allocator import Allocator
 from oversight.attention import AttentionTracker
-from oversight.policy import Policy, Tier
+from oversight.policy import Policy
 from oversight.schema import Route
 
 
@@ -43,7 +43,15 @@ def test_high_degrades_to_safety_model_when_human_unavailable(policy_path, act):
 
 def test_high_degrades_when_budget_exhausted(policy_path, act):
     al = make(policy_path, max_interrupts=1)
-    assert al.decide(high(act, ), now=0).route == Route.HUMAN
+    assert (
+        al.decide(
+            high(
+                act,
+            ),
+            now=0,
+        ).route
+        == Route.HUMAN
+    )
     d = al.decide(high(act), now=1)
     assert d.route == Route.SAFETY_MODEL and d.degraded
 
@@ -83,9 +91,7 @@ def test_deterministic(policy_path, act):
     a = make(policy_path)
     b = make(policy_path)
     seq = [act(), act(category="exec"), high(act), crit(act)]
-    assert [a.decide(x, now=i).route for i, x in enumerate(seq)] == [
-        b.decide(x, now=i).route for i, x in enumerate(seq)
-    ]
+    assert [a.decide(x, now=i).route for i, x in enumerate(seq)] == [b.decide(x, now=i).route for i, x in enumerate(seq)]
 
 
 def test_critical_decision_is_budget_exempt_high_is_not(policy_path, act):

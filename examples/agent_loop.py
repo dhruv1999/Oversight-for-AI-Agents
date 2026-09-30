@@ -9,14 +9,15 @@ Nothing real is touched.
 Blocked or deferred calls come back to Claude as an error tool_result with the reason,
 so the agent can adapt instead of silently failing.
 """
+
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -33,14 +34,34 @@ from oversight.safety_model import HeuristicSafetyModel  # noqa: E402
 MODEL = "claude-opus-5-5"
 
 TOOLS: list[dict[str, Any]] = [
-    {"name": "read_file", "description": "Read a file from the project.",
-     "input_schema": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
-    {"name": "run_sql", "description": "Run a SQL statement against the company database.",
-     "input_schema": {"type": "object", "properties": {"database": {"type": "string"}, "query": {"type": "string"}}, "required": ["database", "query"]}},
-    {"name": "send_email", "description": "Send an email.",
-     "input_schema": {"type": "object", "properties": {"to": {"type": "string"}, "subject": {"type": "string"}, "body": {"type": "string"}}, "required": ["to", "subject", "body"]}},
-    {"name": "pay_invoice", "description": "Pay a vendor invoice (USD).",
-     "input_schema": {"type": "object", "properties": {"vendor": {"type": "string"}, "amount": {"type": "number"}, "invoice_id": {"type": "string"}}, "required": ["vendor", "amount", "invoice_id"]}},
+    {
+        "name": "read_file",
+        "description": "Read a file from the project.",
+        "input_schema": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
+    },
+    {
+        "name": "run_sql",
+        "description": "Run a SQL statement against the company database.",
+        "input_schema": {"type": "object", "properties": {"database": {"type": "string"}, "query": {"type": "string"}}, "required": ["database", "query"]},
+    },
+    {
+        "name": "send_email",
+        "description": "Send an email.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"to": {"type": "string"}, "subject": {"type": "string"}, "body": {"type": "string"}},
+            "required": ["to", "subject", "body"],
+        },
+    },
+    {
+        "name": "pay_invoice",
+        "description": "Pay a vendor invoice (USD).",
+        "input_schema": {
+            "type": "object",
+            "properties": {"vendor": {"type": "string"}, "amount": {"type": "number"}, "invoice_id": {"type": "string"}},
+            "required": ["vendor", "amount", "invoice_id"],
+        },
+    },
 ]
 
 DEFAULT_TASK = (
@@ -113,8 +134,14 @@ def run_agent(
             if allowed:
                 results.append({"type": "tool_result", "tool_use_id": block.id, "content": execute(block.name, dict(block.input))})
             else:
-                results.append({"type": "tool_result", "tool_use_id": block.id, "is_error": True,
-                                "content": f"Not executed. Oversight decision: {why}. Do not retry this exact call; explain or choose a safer alternative."})
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "is_error": True,
+                        "content": f"Not executed. Oversight decision: {why}. Do not retry this exact call; explain or choose a safer alternative.",
+                    }
+                )
         messages.append({"role": "user", "content": results})  # all results in one message
     return "(stopped: max turns reached)"
 

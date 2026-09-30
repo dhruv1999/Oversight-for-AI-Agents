@@ -51,12 +51,15 @@ def test_email_to_internal_vs_external(reg):
 
 
 def test_rules_only_raise(reg, policy_path, tmp_path):
-    text = TOOLS.read_text() + """
+    text = (
+        TOOLS.read_text()
+        + """
   - name: try-to-lower
     tool: update_iam
     any_param_regex: '.'
     set: {category: read, reversibility: reversible}
 """
+    )
     f = tmp_path / "t.yaml"
     f.write_text(text)
     r = ToolRegistry.load(f, Policy.load(policy_path))

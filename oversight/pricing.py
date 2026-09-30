@@ -1,4 +1,5 @@
 """USD per million tokens (input, output). Anthropic first-party list prices, cached 2026-09-25."""
+
 from __future__ import annotations
 
 import re

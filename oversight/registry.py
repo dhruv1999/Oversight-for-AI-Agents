@@ -4,6 +4,7 @@ In a real deployment the agent only proposes (tool, params, description); nobody
 hands us honest risk labels. The registry supplies defaults per tool and
 param-inspecting rules that can only ever raise risk.
 """
+
 from __future__ import annotations
 
 import json

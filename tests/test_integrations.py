@@ -77,8 +77,14 @@ def test_hook_process_fails_safe_on_garbage(tmp_path):
 
 def test_hook_process_end_to_end(tmp_path):
     env = {"OVERSIGHT_STATE_DIR": str(tmp_path), "PATH": "/usr/bin:/bin"}
-    r = subprocess.run([sys.executable, "-m", "oversight.integrations.claude_code_hook"], input=json.dumps(payload("Read", file_path="a")),
-                       capture_output=True, text=True, cwd=ROOT, env=env)
+    r = subprocess.run(
+        [sys.executable, "-m", "oversight.integrations.claude_code_hook"],
+        input=json.dumps(payload("Read", file_path="a")),
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+        env=env,
+    )
     assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "defer"
 
 
@@ -108,14 +114,19 @@ def tool_use(id, name, **inp):
 def test_agent_loop_gates_every_call(tmp_path):
     ex = load_example()
     gate, registry = ex.build_gate(tmp_path / "log.jsonl")
-    claude = ScriptedClaude([
-        NS(stop_reason="tool_use", content=[
-            tool_use("t1", "run_sql", database="app", query="SELECT count(*) FROM orders"),
-            tool_use("t2", "run_sql", database="app_production", query="DROP TABLE orders"),
-            tool_use("t3", "pay_invoice", vendor="Acme Paper Co", amount=420, invoice_id="INV-1"),
-        ]),
-        NS(stop_reason="end_turn", content=[NS(type="text", text="done")]),
-    ])
+    claude = ScriptedClaude(
+        [
+            NS(
+                stop_reason="tool_use",
+                content=[
+                    tool_use("t1", "run_sql", database="app", query="SELECT count(*) FROM orders"),
+                    tool_use("t2", "run_sql", database="app_production", query="DROP TABLE orders"),
+                    tool_use("t3", "pay_invoice", vendor="Acme Paper Co", amount=420, invoice_id="INV-1"),
+                ],
+            ),
+            NS(stop_reason="end_turn", content=[NS(type="text", text="done")]),
+        ]
+    )
     lines = []
     ticks = iter(range(0, 10_000, 60))
     out = ex.run_agent(claude, "task", gate, registry, ex.AutoHuman(False), ex.FakeCompany(), clock=lambda: float(next(ticks)), printer=lines.append)

@@ -1,4 +1,5 @@
 """A workday of agent actions sampled from the pool."""
+
 from __future__ import annotations
 
 import random

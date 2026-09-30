@@ -34,9 +34,7 @@ class SpendTracker:
     def check(self, model: str, est_input_tokens: int, max_output_tokens: int) -> None:
         worst = cost_usd(model, est_input_tokens, max_output_tokens)
         if self.spent_usd + worst > self.max_usd:
-            raise SpendLimitExceeded(
-                f"next call could cost ${worst:.4f}; spent ${self.spent_usd:.4f} of MAX_SPEND_USD=${self.max_usd:.2f}"
-            )
+            raise SpendLimitExceeded(f"next call could cost ${worst:.4f}; spent ${self.spent_usd:.4f} of MAX_SPEND_USD=${self.max_usd:.2f}")
 
     def record(self, model: str, input_tokens: int, output_tokens: int) -> float:
         c = cost_usd(model, input_tokens, output_tokens)

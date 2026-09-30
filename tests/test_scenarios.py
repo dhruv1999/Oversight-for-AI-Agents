@@ -62,7 +62,7 @@ def test_schedules():
         s1 = make_schedule(prof, random.Random(1))
         assert s1 == make_schedule(prof, random.Random(1))
         assert 0 <= s1.available_fraction() <= 1
-        for (a, b), (c, d) in zip(s1.unavailable, s1.unavailable[1:]):
+        for (a, b), (c, d) in zip(s1.unavailable, s1.unavailable[1:], strict=False):
             assert a < b <= c < d
     away = make_schedule("away", random.Random(0))
     assert away.available(0) and not away.available(3600) and away.available(8 * 3600 - 60)

@@ -1,4 +1,5 @@
 """When is the human reachable? Seeded schedules of unavailable intervals over one workday."""
+
 from __future__ import annotations
 
 import random

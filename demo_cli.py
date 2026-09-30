@@ -1,4 +1,5 @@
 """Route 10 synthetic actions and print route + reason for each. No models, no real data."""
+
 from pathlib import Path
 
 from oversight.allocator import Allocator

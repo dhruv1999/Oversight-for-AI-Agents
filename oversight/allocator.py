@@ -53,6 +53,4 @@ class Allocator:
         if ok:
             self.attention.record_interrupt(now)
             return replace(decision, route=Route.HUMAN, escalated=True, reasons=reasons + (f"human reviews ({reach})",))
-        return replace(
-            decision, route=Route.HUMAN, escalated=True, deferred=True, reasons=reasons + (f"human not reachable ({reach}); deferred",)
-        )
+        return replace(decision, route=Route.HUMAN, escalated=True, deferred=True, reasons=reasons + (f"human not reachable ({reach}); deferred",))

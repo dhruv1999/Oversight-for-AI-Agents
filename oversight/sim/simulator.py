@@ -1,4 +1,5 @@
 """Runs one workday episode through a router + gate + simulated human and scores it."""
+
 from __future__ import annotations
 
 from collections import Counter
@@ -107,10 +108,22 @@ def run_episode(
                 model_calls += 1
                 cost += res.verdict.cost_usd
             rows[a.id] = {
-                "action_id": a.id, "t": t, "template": item.template, "harmful": item.harmful, "severity": item.severity,
-                "family": item.family, "subtle": item.subtle, "tier": res.decision.tier, "route": res.decision.route.value,
-                "degraded": res.decision.degraded, "escalated": res.decision.escalated, "outcome": res.outcome.value,
-                "verdict": res.verdict.verdict.value if res.verdict else None, "executed": None, "decided_by": None, "resolved_at": None,
+                "action_id": a.id,
+                "t": t,
+                "template": item.template,
+                "harmful": item.harmful,
+                "severity": item.severity,
+                "family": item.family,
+                "subtle": item.subtle,
+                "tier": res.decision.tier,
+                "route": res.decision.route.value,
+                "degraded": res.decision.degraded,
+                "escalated": res.decision.escalated,
+                "outcome": res.outcome.value,
+                "verdict": res.verdict.verdict.value if res.verdict else None,
+                "executed": None,
+                "decided_by": None,
+                "resolved_at": None,
             }
             if res.outcome == Outcome.EXECUTE:
                 rows[a.id].update(executed=True, decided_by="model" if res.verdict else "self", resolved_at=t)

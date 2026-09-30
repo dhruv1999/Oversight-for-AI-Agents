@@ -1,10 +1,12 @@
 """Human reviewers: a console prompt for real use and a simulated human for evaluation."""
+
 from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Protocol
+from typing import Protocol
 
 from .schema import Action
 

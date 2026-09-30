@@ -1,4 +1,5 @@
 """Comparison routers. Same interface as Allocator: decide() and escalate(). Deterministic, no models."""
+
 from __future__ import annotations
 
 from dataclasses import replace
