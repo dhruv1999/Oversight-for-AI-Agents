@@ -5,6 +5,9 @@ description = "Adaptive oversight routing for AI agents: self, safety model, or 
 requires-python = ">=3.11"
 dependencies = ["pyyaml>=6"]
 
+[project.scripts]
+oversight = "oversight.cli:main"
+
 [project.optional-dependencies]
 anthropic = [
     "anthropic>=0.40",

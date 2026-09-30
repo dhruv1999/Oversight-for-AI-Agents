@@ -10,12 +10,14 @@ elif check.needs_person: ask_someone(check.explain())
 
 from __future__ import annotations
 
+import functools
+import inspect
 import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar, cast
 
 from .allocator import Allocator
 from .attention import AttentionTracker
@@ -27,6 +29,8 @@ from .registry import ToolRegistry
 from .safety_model import HeuristicSafetyModel, SafetyModel
 from .schema import Action
 from .store import FileStore, MemoryStore, StateStore
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 @dataclass(frozen=True)
@@ -68,6 +72,18 @@ class Check:
     def explain(self) -> str:
         head = f"{self.action.tool}: {self.outcome.value} ({self.risk} risk)"
         return "\n".join([head, *(f"  {r}" for r in self.result.decision.reasons)])
+
+
+class ActionBlocked(Exception):
+    """Raised by a protected tool when the action must not run. `check` says why."""
+
+    def __init__(self, check: Check):
+        super().__init__(f"{check.action.tool} was not run: {check.reason}")
+        self.check = check
+
+
+class ActionDeferred(ActionBlocked):
+    """Raised when a person must decide but nobody can be asked right now."""
 
 
 class Oversight:
@@ -143,6 +159,23 @@ class Oversight:
             gate, _ = self._gate(state, t)
             gate.record_human(check.action, approved, t, note, queued=check.waiting)
 
+    def register_tool(
+        self,
+        name: str,
+        category: str = "write",
+        reversibility: str = "reversible",
+        blast_radius: str = "project",
+        sensitivity: str = "none",
+    ) -> None:
+        """Tell oversight how risky one of your own tools normally is. Unknown tools are treated as high risk.
+
+        category: read, write, network, comms, exec, financial, admin
+        reversibility: reversible, costly, irreversible
+        blast_radius: self, project, org, external
+        sensitivity: none, internal, pii, secret
+        """
+        self.registry.register(name, category, reversibility, blast_radius, sensitivity)
+
     def person_away(self) -> None:
         with self.store.transaction() as state:
             state["available"] = False
@@ -154,3 +187,58 @@ class Oversight:
     def is_person_available(self) -> bool:
         with self.store.transaction() as state:
             return bool(state["available"])
+
+    def protect(
+        self,
+        tool: str | None = None,
+        ask: Callable[[Check], bool] | None = None,
+    ) -> Callable[[F], F]:
+        """Decorator that puts any Python tool function behind oversight.
+
+            @guard.protect(ask=ask_on_slack)
+            def pay_invoice(vendor: str, amount: float) -> str: ...
+
+        Works with plain functions and coroutines, and keeps the signature, so agent frameworks
+        (OpenAI Agents SDK, LangChain, and others) still build the right tool schema. The tool name
+        defaults to the function name; params are the call's arguments by name. When a person is
+        needed, `ask(check)` decides; without `ask` the call is refused. Refusals raise ActionBlocked
+        (or ActionDeferred), whose message is written for the agent to read.
+        """
+
+        def decorate(fn: F) -> F:
+            name = tool or fn.__name__
+            sig = inspect.signature(fn)
+
+            def gate(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Check:
+                bound = sig.bind(*args, **kwargs)
+                bound.apply_defaults()
+                params = {k: v for k, v in bound.arguments.items() if k not in ("self", "cls")}
+                check = self.check(name, params, description=(fn.__doc__ or "").strip().split("\n")[0])
+                if check.allowed:
+                    return check
+                if check.needs_person and ask is not None:
+                    approved = bool(ask(check))
+                    self.record_answer(check, approved)
+                    if approved:
+                        return check
+                if check.waiting:
+                    raise ActionDeferred(check)
+                raise ActionBlocked(check)
+
+            if inspect.iscoroutinefunction(fn):
+
+                @functools.wraps(fn)
+                async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                    gate(args, kwargs)
+                    return await fn(*args, **kwargs)
+
+                return cast(F, async_wrapper)
+
+            @functools.wraps(fn)
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
+                gate(args, kwargs)
+                return fn(*args, **kwargs)
+
+            return cast(F, wrapper)
+
+        return decorate

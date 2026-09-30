@@ -2,20 +2,41 @@ name: ci
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python: ["3.11", "3.12", "3.13"]
+        include:
+          - os: macos-latest
+            python: "3.12"
+          - os: windows-latest
+            python: "3.12"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - run: uv sync --extra anthropic
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
       - run: uv run pytest -q
+
+  frameworks:
+    # the decorator inside real agent frameworks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync
+      - run: uv run --with openai-agents --with langchain-core pytest -q tests/test_frameworks.py
 
   install-from-scratch:
     # what a new user does: pip install the repo into a clean environment and use it from another folder
@@ -27,3 +48,4 @@ jobs:
           python-version: "3.12"
       - run: python -m venv /tmp/env && /tmp/env/bin/pip install .
       - run: cd /tmp && /tmp/env/bin/python "$GITHUB_WORKSPACE/examples/quickstart.py"
+      - run: cd /tmp && /tmp/env/bin/oversight check pay_invoice '{"vendor":"Acme","amount":420}' || test $? -eq 3

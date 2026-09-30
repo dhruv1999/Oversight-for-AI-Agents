@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -77,7 +78,7 @@ def test_hook_process_fails_safe_on_garbage(tmp_path):
 
 
 def test_hook_process_end_to_end(tmp_path):
-    env = {"OVERSIGHT_STATE_DIR": str(tmp_path), "PATH": "/usr/bin:/bin"}
+    env = {**os.environ, "OVERSIGHT_STATE_DIR": str(tmp_path)}
     r = subprocess.run(
         [sys.executable, "-m", "oversight.integrations.claude_code_hook"],
         input=json.dumps(payload("Read", file_path="a")),

@@ -85,6 +85,12 @@ class ToolRegistry:
         reg.fingerprint = hashlib.sha256(text.encode()).hexdigest()[:12]
         return reg
 
+    def register(self, name: str, category: str, reversibility: str, blast_radius: str, sensitivity: str) -> None:
+        """Declare a tool's normal risk. Parameter rules in the registry still apply on top."""
+        meta = {"category": category, "reversibility": reversibility, "blast_radius": blast_radius, "sensitivity": sensitivity}
+        self._validate(name, meta, full=True)
+        self.tools[name] = meta
+
     def to_action(self, id: str, tool: str, params: dict[str, Any], description: str) -> Action:
         known = tool in self.tools
         meta = dict(self.tools[tool] if known else self.unknown)
