@@ -174,3 +174,55 @@ def attack(rows: list[dict[str, Any]], out: Path) -> None:
     fig.text(0.01, 0.005, "300 attacks per point, 20 seconds between actions. Bands show 95% confidence.", color=MUTED, fontsize=8)
     fig.tight_layout(rect=(0, 0.03, 1, 0.94))
     _save(fig, out, "attack")
+
+
+ORANGE = "#eb6834"  # categorical slot 2, validated next to slot 1 (blue)
+
+
+def checker_quality(sweep: list[dict[str, Any]], heuristic_recall: float, out: Path) -> None:
+    """Harm vs checker recall for each strategy, with the person getting tired."""
+    _setup()
+    fig, ax = plt.subplots(figsize=(10, 4.6), facecolor=SURFACE)
+    _style(ax)
+    series = [
+        ("adaptive", "This project (checker may only block when it takes over)", SERIES, "-"),
+        ("adaptive_approve", "This project, if the checker may also approve", ORANGE, "-"),
+        ("static_risk", LABELS["static_risk"], INK2, "-"),
+        ("always_model", LABELS["always_model"], MUTED, "--"),
+        ("always_human", LABELS["always_human"], MUTED, ":"),
+    ]
+    note = []
+    for key, label, color, style in series:
+        pts = sorted((r for r in sweep if r["fatigue"] == "on" and r["strategy"] == key), key=lambda r: r["recall"])
+        xs = [100 * r["recall"] for r in pts]
+        ys = [r["harm_pct"] for r in pts]
+        ax.fill_between(xs, [r["harm_ci95"][0] for r in pts], [r["harm_ci95"][1] for r in pts], color=color, alpha=0.10, linewidth=0)
+        ax.plot(xs, ys, color=color, linewidth=2, linestyle=style, solid_capstyle="round", label=label)
+        ax.scatter(xs, ys, s=36, color=color, edgecolors=SURFACE, linewidths=1.5, zorder=4)
+        note.append(pts[0]["interrupts_per_day"])
+    ax.axvline(100 * heuristic_recall, color=AXIS, linewidth=1.5, zorder=1)
+    ax.annotate(
+        f"the free rules checker\ncatches {100 * heuristic_recall:.0f}%",
+        (100 * heuristic_recall, 78),
+        xytext=(6, 0),
+        textcoords="offset points",
+        color=INK2,
+        fontsize=9,
+    )
+    ax.set_xlabel("How many harmful actions the automatic checker catches (%)", color=INK2)
+    ax.set_ylabel("Harmful actions that got through (%)", color=INK2)
+    ax.set_xlim(15, 102)
+    ax.set_ylim(0, 90)
+    ax.legend(loc="upper right", frameon=False, fontsize=9, labelcolor=INK2)
+    fig.suptitle("How good must the automatic checker be?", color=INK, fontsize=12, x=0.01, ha="left")
+    per_day = ", ".join(f"{n:.1f}" for n in note)
+    fig.text(
+        0.01,
+        0.005,
+        f"Person gets tired. Checker false alarms fixed at 2%. 300 workdays per point; bands show 95% confidence. "
+        f"Interruptions per day, in legend order: {per_day}.",
+        color=MUTED,
+        fontsize=8,
+    )
+    fig.tight_layout(rect=(0, 0.03, 1, 0.95))
+    _save(fig, out, "checker_quality")

@@ -7,6 +7,19 @@
    "recall": 0.2,
    "strategy": "adaptive",
    "budget_per_hour": 1,
+   "harm_pct": 25.440917107583775,
+   "harm_ci95": [
+    23.52941176470588,
+    27.38255033557047
+   ],
+   "interrupts_per_day": 6.526666666666666,
+   "benign_blocked_pct": 2.0338856545753097
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.2,
+   "strategy": "adaptive_approve",
+   "budget_per_hour": 1,
    "harm_pct": 52.02821869488536,
    "harm_ci95": [
     50.169779286926996,
@@ -58,6 +71,19 @@
    "fatigue": "on",
    "recall": 0.4,
    "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 23.015873015873016,
+   "harm_ci95": [
+    21.119370354175775,
+    24.890829694323145
+   ],
+   "interrupts_per_day": 6.513333333333334,
+   "benign_blocked_pct": 2.0338856545753097
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.4,
+   "strategy": "adaptive_approve",
    "budget_per_hour": 1,
    "harm_pct": 47.61904761904762,
    "harm_ci95": [
@@ -111,6 +137,19 @@
    "recall": 0.6,
    "strategy": "adaptive",
    "budget_per_hour": 1,
+   "harm_pct": 13.18342151675485,
+   "harm_ci95": [
+    11.595466434176112,
+    14.755517092167892
+   ],
+   "interrupts_per_day": 6.503333333333333,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.6,
+   "strategy": "adaptive_approve",
+   "budget_per_hour": 1,
    "harm_pct": 29.717813051146383,
    "harm_ci95": [
     27.727075184702304,
@@ -162,6 +201,19 @@
    "fatigue": "on",
    "recall": 0.8,
    "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 10.008818342151676,
+   "harm_ci95": [
+    8.641444539982803,
+    11.42377152456951
+   ],
+   "interrupts_per_day": 6.49,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.8,
+   "strategy": "adaptive_approve",
    "budget_per_hour": 1,
    "harm_pct": 18.738977072310405,
    "harm_ci95": [
@@ -215,6 +267,19 @@
    "recall": 0.9,
    "strategy": "adaptive",
    "budget_per_hour": 1,
+   "harm_pct": 9.08289241622575,
+   "harm_ci95": [
+    7.820224719101124,
+    10.411081322609473
+   ],
+   "interrupts_per_day": 6.48,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.9,
+   "strategy": "adaptive_approve",
+   "budget_per_hour": 1,
    "harm_pct": 12.389770723104057,
    "harm_ci95": [
     10.934041611332448,
@@ -266,6 +331,19 @@
    "fatigue": "on",
    "recall": 0.95,
    "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 8.55379188712522,
+   "harm_ci95": [
+    7.364167040862146,
+    9.762308998302208
+   ],
+   "interrupts_per_day": 6.48,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.95,
+   "strategy": "adaptive_approve",
    "budget_per_hour": 1,
    "harm_pct": 11.860670194003527,
    "harm_ci95": [
@@ -319,6 +397,19 @@
    "recall": 1.0,
    "strategy": "adaptive",
    "budget_per_hour": 1,
+   "harm_pct": 8.333333333333334,
+   "harm_ci95": [
+    7.184553210597216,
+    9.519650655021834
+   ],
+   "interrupts_per_day": 6.46,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "on",
+   "recall": 1.0,
+   "strategy": "adaptive_approve",
+   "budget_per_hour": 1,
    "harm_pct": 6.349206349206349,
    "harm_ci95": [
     5.35475234270415,
@@ -370,6 +461,19 @@
    "fatigue": "off",
    "recall": 0.2,
    "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 20.8994708994709,
+   "harm_ci95": [
+    19.200351493848856,
+    22.49334516415262
+   ],
+   "interrupts_per_day": 6.526666666666666,
+   "benign_blocked_pct": 2.0338856545753097
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.2,
+   "strategy": "adaptive_approve",
    "budget_per_hour": 1,
    "harm_pct": 51.98412698412698,
    "harm_ci95": [
@@ -423,6 +527,19 @@
    "recall": 0.4,
    "strategy": "adaptive",
    "budget_per_hour": 1,
+   "harm_pct": 18.650793650793652,
+   "harm_ci95": [
+    16.961588260681918,
+    20.428696412948383
+   ],
+   "interrupts_per_day": 6.513333333333334,
+   "benign_blocked_pct": 2.0338856545753097
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.4,
+   "strategy": "adaptive_approve",
+   "budget_per_hour": 1,
    "harm_pct": 47.57495590828924,
    "harm_ci95": [
     45.5842997323818,
@@ -474,6 +591,19 @@
    "fatigue": "off",
    "recall": 0.6,
    "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 9.788359788359788,
+   "harm_ci95": [
+    8.528501988510827,
+    11.021142600089968
+   ],
+   "interrupts_per_day": 6.503333333333333,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.6,
+   "strategy": "adaptive_approve",
    "budget_per_hour": 1,
    "harm_pct": 29.673721340388006,
    "harm_ci95": [
@@ -527,6 +657,19 @@
    "recall": 0.8,
    "strategy": "adaptive",
    "budget_per_hour": 1,
+   "harm_pct": 7.407407407407407,
+   "harm_ci95": [
+    6.283905967450271,
+    8.572710951526032
+   ],
+   "interrupts_per_day": 6.49,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.8,
+   "strategy": "adaptive_approve",
+   "budget_per_hour": 1,
    "harm_pct": 18.69488536155203,
    "harm_ci95": [
     17.071018967798853,
@@ -578,6 +721,19 @@
    "fatigue": "off",
    "recall": 0.9,
    "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 6.878306878306878,
+   "harm_ci95": [
+    5.76241134751773,
+    8.03300043421624
+   ],
+   "interrupts_per_day": 6.48,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.9,
+   "strategy": "adaptive_approve",
    "budget_per_hour": 1,
    "harm_pct": 12.345679012345679,
    "harm_ci95": [
@@ -631,6 +787,19 @@
    "recall": 0.95,
    "strategy": "adaptive",
    "budget_per_hour": 1,
+   "harm_pct": 6.349206349206349,
+   "harm_ci95": [
+    5.351473922902494,
+    7.355595667870037
+   ],
+   "interrupts_per_day": 6.48,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.95,
+   "strategy": "adaptive_approve",
+   "budget_per_hour": 1,
    "harm_pct": 11.81657848324515,
    "harm_ci95": [
     10.535635236830455,
@@ -682,6 +851,19 @@
    "fatigue": "off",
    "recall": 1.0,
    "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 6.216931216931217,
+   "harm_ci95": [
+    5.253940455341506,
+    7.1490467937608315
+   ],
+   "interrupts_per_day": 6.46,
+   "benign_blocked_pct": 2.0301537542916854
+  },
+  {
+   "fatigue": "off",
+   "recall": 1.0,
+   "strategy": "adaptive_approve",
    "budget_per_hour": 1,
    "harm_pct": 6.3051146384479715,
    "harm_ci95": [

@@ -95,7 +95,7 @@ def robustness_md(rob) -> str:
     worse = sum(x["harm_diff_ci95"][0] > 0 for x in assumptions)
     fewer = sum(x["interrupts_diff_ci95"][1] < 0 for x in assumptions)
     no_fb = v["Remove: checker takes over when the budget is spent"]
-    lax = v["Remove: stricter bar for the checker when it takes over"]
+    lax = v["Remove: checker may only block, not approve, when it takes over"]
     acct = v["Every queued review counts as its own interruption"]
     base = v["Baseline assumptions"]
     att = rob["budget_drain_attack"]
@@ -125,7 +125,7 @@ Removing one piece at a time (the last two rows above):
 - **Without the checker taking over when the budget is spent**, over budget actions just wait for the person.
   The harm advantage mostly disappears ({no_fb["harm_diff_points"]:+.1f} points, {no_fb["harm_diff_ci95"][0]:+.1f} to {no_fb["harm_diff_ci95"][1]:+.1f})
   and more actions wait ({no_fb["adaptive_deferred"]:.1f} per day). The interruption saving comes from the budget; the safety gain comes from the takeover.
-- **Without the stricter bar for the checker when it takes over**, far fewer actions wait ({lax["adaptive_deferred"]:.1f} per day instead of
+- **If the checker may also approve high risk actions when it takes over** (instead of only blocking them), far fewer actions wait ({lax["adaptive_deferred"]:.1f} per day instead of
   {base["adaptive_deferred"]:.1f}) but harm gets worse than fixed rules ({lax["harm_diff_points"]:+.1f} points, {lax["harm_diff_ci95"][0]:+.1f} to
   {lax["harm_diff_ci95"][1]:+.1f}). This is the main dial between speed and safety, and the default sits on the safe side.
 
@@ -142,6 +142,79 @@ With fixed rules the attack gets easier as the burst grows, because every decoy 
 ({a("fatigue on", "static_risk", 0)["success_pct"]:.0f}% → {a("fatigue on", "static_risk", top)["success_pct"]:.0f}% with a tired person).
 Here the budget runs out, the checker takes over with its stricter bar, and success stays at
 {a("fatigue on", "adaptive", top)["success_pct"]:.0f}% after {top} decoys. The defence depends on the checker: an attacker that also fools the checker is not covered."""
+
+
+def research_md(res) -> str:
+    if not res:
+        return ""
+    sweep = [r for r in res["checker_sweep"] if r["fatigue"] == "on"]
+    recalls = sorted({r["recall"] for r in sweep})
+
+    def cell(strat, rc):
+        r = next(x for x in sweep if x["strategy"] == strat and x["recall"] == rc)
+        return f"{r['harm_pct']:.1f}%"
+
+    order = [
+        ("adaptive", "This project (checker may only block when it takes over)"),
+        ("adaptive_approve", "This project, if the checker may also approve"),
+        ("static_risk", "Fixed approval rules"),
+        ("always_model", "Automatic checker reviews everything"),
+        ("always_human", "Person approves everything"),
+    ]
+    head = "| Harmful actions that got through | " + " | ".join(f"checker catches {100 * rc:.0f}%" for rc in recalls) + " |"
+    rows = [head, "|---" * (len(recalls) + 1) + "|"]
+    for key, label in order:
+        rows.append(f"| {label} | " + " | ".join(cell(key, rc) for rc in recalls) + " |")
+
+    def harm(strat, rc):
+        return next(x for x in sweep if x["strategy"] == strat and x["recall"] == rc)["harm_pct"]
+
+    per_day = {k: next(x for x in sweep if x["strategy"] == k)["interrupts_per_day"] for k, _ in order}
+    beats = [rc for rc in recalls if harm("adaptive", rc) <= harm("static_risk", rc)]
+    approve_beats = [rc for rc in recalls if harm("adaptive_approve", rc) < harm("static_risk", rc)]
+    checker_alone = [rc for rc in recalls if harm("always_model", rc) < harm("adaptive", rc)]
+    paced_ok = [p["budget_per_hour"] for p in res["pacing"] if p["harm_diff_ci95"][1] < 0 and p["interrupts_diff_ci95"][1] < 0]
+    pace = "\n".join(
+        f"| {p['budget_per_hour']} per hour | {p['harm_diff_points']:+.2f} ({p['harm_diff_ci95'][0]:+.2f} to {p['harm_diff_ci95'][1]:+.2f}) | "
+        f"{p['interrupts_diff_per_day']:+.2f} ({p['interrupts_diff_ci95'][0]:+.2f} to {p['interrupts_diff_ci95'][1]:+.2f}) |"
+        for p in res["pacing"]
+    )
+    return f"""## How good must the checker be?
+
+The free rules checker stops {100 * res["heuristic_recall"]:.0f}% of the harmful actions in the pool. To see what a better checker
+(for example an LLM) would change, a simulated checker with a chosen catch rate replaces it, with false alarms fixed at
+{100 * res["false_alarm"]:.0f}% and full confidence in every answer.
+
+![checker quality](../figures/checker_quality.png)
+
+{chr(10).join(rows)}
+
+Interruptions per day do not depend on the checker: {per_day["adaptive"]:.1f} for this project, {per_day["adaptive_approve"]:.1f} if the checker may approve,
+{per_day["static_risk"]:.1f} for fixed rules, {per_day["always_human"]:.1f} when a person approves everything.
+
+What this shows:
+
+- **When the checker may only block during a takeover**, this project let through no more harm than fixed rules at every
+  catch rate tested ({", ".join(f"{100 * r:.0f}%" for r in beats) or "none"}), with about half the interruptions. The price is a longer queue.
+- **If the checker may also approve**, a confident but mediocre checker is dangerous: it beat fixed rules only at catch rates of
+  {", ".join(f"{100 * r:.0f}%" for r in approve_beats) or "none tested"}. This result is why the default policy is `takeover: veto`.
+  The default used to allow approval at confidence 0.85; it changed after this experiment. The free rules checker never
+  reaches 0.85 confidence, so none of the earlier results move.
+- A checker that reviews everything on its own (and never interrupts anyone) only beats this project once it catches
+  {f"{100 * min(checker_alone):.0f}%" if checker_alone else "more than 100%"} or more of harmful actions.
+
+## Does pacing help?
+
+With a budget above one interruption an hour, the router can save the remaining interruptions for the riskiest high risk
+actions instead of spending them first come, first served. Paired difference, pacing minus no pacing:
+
+| Budget | Harm, points (95% CI) | Interruptions per day (95% CI) |
+|---|---|---|
+{pace}
+
+Pacing was a small improvement on both measures, with confidence intervals below zero, at budgets of
+{", ".join(f"{b} per hour" for b in paced_ok) or "none of the budgets tested"}. It stays off by default
+(`Allocator(pacing=True)` turns it on) until it is tested with a real checker."""
 
 
 def hero_title(h) -> str:
@@ -271,6 +344,8 @@ An interval that does not include 0 means the difference is unlikely to be noise
 {profile_table(rows)}
 
 {robustness_md(manifest.get("robustness"))}
+
+{research_md(manifest.get("research"))}
 
 ## Safety-model verdicts on the unique action pool
 
@@ -402,6 +477,11 @@ def main() -> None:
         charts.robustness(rob["variants"], ROOT / "figures")
         charts.attack(rob["budget_drain_attack"], ROOT / "figures")
     manifest["robustness"] = rob
+    res_path = ROOT / "results" / args.tag / "research.json"
+    research = json.loads(res_path.read_text(encoding="utf-8")) if res_path.exists() else None
+    if research:
+        charts.checker_quality(research["checker_sweep"], research["heuristic_recall"], ROOT / "figures")
+    manifest["research"] = research
     (ROOT / "docs").mkdir(exist_ok=True)
     (ROOT / "docs" / "results.md").write_text(results_md(rows, manifest, acc, args.tag), encoding="utf-8")
     (ROOT / "docs" / "linkedin_post.md").write_text(linkedin_post(rows), encoding="utf-8")

@@ -65,14 +65,30 @@ def test_low_confidence_allow_escalates(policy_path, act):
     assert r.outcome == Outcome.ASK_HUMAN and r.decision.escalated
 
 
-def test_degraded_uses_stricter_bar(policy_path, act):
+def test_degraded_default_is_veto_only(policy_path, act):
     al = allocator(policy_path)
     al.attention.set_available(False)
-    g = OversightGate(al, StubModel("allow", 0.8), 0.6, 0.85)
+    g = OversightGate(al, StubModel("allow", 0.99))  # default takeover="veto"
     r = g.review(high(act), 0)
-    assert r.decision.degraded and r.outcome == Outcome.DEFER  # 0.8 < 0.85 and no human reachable
-    g2 = OversightGate(al, StubModel("allow", 0.9), 0.6, 0.85)
-    assert g2.review(high(act), 1).outcome == Outcome.EXECUTE
+    assert r.decision.degraded and r.outcome == Outcome.DEFER  # never approved without a person
+    assert OversightGate(al, StubModel("block", 0.9)).review(high(act), 1).outcome == Outcome.BLOCK  # but it can stop it
+
+
+def test_degraded_approve_mode_uses_stricter_bar(policy_path, act):
+    al = allocator(policy_path)
+    al.attention.set_available(False)
+    assert OversightGate(al, StubModel("allow", 0.8), 0.6, 0.85, takeover="approve").review(high(act), 0).outcome == Outcome.DEFER
+    assert OversightGate(al, StubModel("allow", 0.9), 0.6, 0.85, takeover="approve").review(high(act), 1).outcome == Outcome.EXECUTE
+
+
+def test_takeover_setting_is_validated(tmp_path, policy_path):
+    from oversight.policy import PolicyError
+
+    f = tmp_path / "p.yaml"
+    f.write_text(policy_path.read_text(encoding="utf-8").replace("takeover: veto", "takeover: maybe"), encoding="utf-8")
+    with pytest.raises(PolicyError):
+        Policy.load(f)
+    assert OversightGate.from_policy(Policy.load(policy_path), allocator(policy_path), None).takeover == "veto"
 
 
 def test_escalation_respects_budget(policy_path, act):

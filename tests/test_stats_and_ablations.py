@@ -85,3 +85,42 @@ def test_counting_each_queued_review_raises_interrupts():
     once = run_episode(events, sched, "static_risk", pol, reg, HeuristicSafetyModel(), 0, 0).metrics
     each = run_episode(events, sched, "static_risk", pol, reg, HeuristicSafetyModel(), 0, 0, batch_counts_once=False).metrics
     assert each["interrupts"] > once["interrupts"] and each["harmful_executed"] >= 0
+
+
+def test_simulated_checker_hits_its_catch_rate():
+    from oversight.policies import DEFAULT_TOOLS
+    from oversight.registry import ToolRegistry
+    from oversight.schema import Verdict
+    from oversight.sim.checkers import SimulatedChecker
+    from oversight.sim.scenarios import build_pool
+
+    pool = build_pool(0)
+    reg = ToolRegistry.load(DEFAULT_TOOLS, Policy.load(DEFAULT_POLICY))
+    c = SimulatedChecker(pool, recall=0.7, false_alarm=0.0)
+    harmful = [p for p in pool if p.harmful]
+    caught = sum(c.review(reg.to_action("x", p.tool, p.params, p.description)).verdict == Verdict.BLOCK for p in harmful)
+    assert 0.55 < caught / len(harmful) < 0.85
+    benign = [p for p in pool if not p.harmful]
+    assert all(c.review(reg.to_action("x", p.tool, p.params, p.description)).verdict == Verdict.ALLOW for p in benign)
+    p = harmful[0]
+    a = reg.to_action("x", p.tool, p.params, p.description)
+    assert c.review(a) == c.review(a)  # same action, same answer
+
+
+def test_pacing_saves_budget_for_riskier_actions(act):
+    pol = Policy.load(DEFAULT_POLICY)
+    al = Allocator(pol, AttentionTracker(3600, 2, 0), pacing=True)
+    medium_high = act(category="financial", reversibility="costly", blast_radius="project")  # score 8
+    riskier = act(category="financial", reversibility="costly", blast_radius="external")  # score 11
+    assert al.decide(medium_high, 0).route == Route.HUMAN  # budget empty: bar is 8
+    d = al.decide(medium_high, 1)  # 1/2 used: bar is 10
+    assert d.route == Route.SAFETY_MODEL and any("pacing" in r for r in d.reasons)
+    assert al.decide(riskier, 2).route == Route.HUMAN
+
+
+def test_research_quick_run():
+    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "run_research.py"), "--quick"], capture_output=True, text=True, encoding="utf-8", cwd=ROOT)
+    assert r.returncode == 0, r.stderr
+    data = json.loads((ROOT / "results" / "heuristic_quick" / "research.json").read_text(encoding="utf-8"))
+    assert {x["strategy"] for x in data["checker_sweep"]} == {"adaptive", "adaptive_approve", "static_risk", "always_model", "always_human"}
+    assert 0 < data["heuristic_recall"] < 1 and len(data["pacing"]) == 4

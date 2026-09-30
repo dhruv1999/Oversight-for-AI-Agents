@@ -1,5 +1,5 @@
 {
- "git_commit": "4c9bcab",
+ "git_commit": "71ffb71",
  "python": "3.11.15",
  "reviewer": "heuristic",
  "seeds": [
@@ -89,8 +89,9 @@
   },
   "safety_model": {
    "min_allow_confidence": 0.6,
+   "takeover": "veto",
    "degraded_min_allow_confidence": 0.85
   }
  },
- "runtime_seconds": 35.5
+ "runtime_seconds": 34.8
 }

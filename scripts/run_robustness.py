@@ -33,7 +33,9 @@ BUDGET = 1
 
 def variants(policy: Policy) -> list[dict[str, Any]]:
     """One assumption changed at a time. 'kind' groups them in the report."""
-    lax = dataclasses.replace(policy, safety_model={**policy.safety_model, "degraded_min_allow_confidence": policy.safety_model["min_allow_confidence"]})
+    lax = dataclasses.replace(
+        policy, safety_model={**policy.safety_model, "takeover": "approve", "degraded_min_allow_confidence": policy.safety_model["min_allow_confidence"]}
+    )
     return [
         {"kind": "baseline", "name": "Baseline assumptions"},
         {"kind": "person", "name": "Person catches 80% when fresh (not 95%)", "human": {"p_detect": 0.80}},
@@ -48,7 +50,7 @@ def variants(policy: Policy) -> list[dict[str, Any]]:
         {"kind": "workload", "name": "Harm is common (15% of actions)", "episode": {"harmful_rate": 0.15}},
         {"kind": "accounting", "name": "Every queued review counts as its own interruption", "batch_counts_once": False},
         {"kind": "design", "name": "Remove: checker takes over when the budget is spent", "router": {"fallback_to_checker": False}},
-        {"kind": "design", "name": "Remove: stricter bar for the checker when it takes over", "policy": lax},
+        {"kind": "design", "name": "Remove: checker may only block, not approve, when it takes over", "policy": lax},
     ]
 
 

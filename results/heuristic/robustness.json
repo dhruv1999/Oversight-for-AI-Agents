@@ -287,7 +287,7 @@
    ],
    "episodes": 300,
    "kind": "design",
-   "name": "Remove: stricter bar for the checker when it takes over",
+   "name": "Remove: checker may only block, not approve, when it takes over",
    "adaptive_harm_pct": 30.158730158730158,
    "static_harm_pct": 22.13403880070547,
    "adaptive_interrupts": 5.47,

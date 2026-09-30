@@ -69,6 +69,8 @@ class Policy:
             v = (raw.get("safety_model") or {}).get(k, 0.5)
             if not isinstance(v, (int, float)) or not 0 <= v <= 1:
                 raise PolicyError(f"safety_model.{k} must be between 0 and 1")
+        if (raw.get("safety_model") or {}).get("takeover", "veto") not in ("veto", "approve"):
+            raise PolicyError("safety_model.takeover must be 'veto' or 'approve'")
         overrides = tuple(raw.get("overrides") or ())
         for o in overrides:
             cls._check_override(o, weights)

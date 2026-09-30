@@ -53,18 +53,27 @@ class OversightGate:
         min_allow_confidence: float = 0.6,
         degraded_min_allow_confidence: float = 0.85,
         log: DecisionLog | None = None,
+        takeover: str = "veto",
     ):
         self.router = router
         self.safety_model = safety_model
         self.min_allow_confidence = min_allow_confidence
         self.degraded_min_allow_confidence = degraded_min_allow_confidence
         self.log = log
+        self.takeover = takeover  # "veto": when taking over from a busy person, the checker may block but never approve
         self.rules_id = ""  # fingerprint of the policy (and tool registry) that made the decisions
 
     @classmethod
     def from_policy(cls, policy: Policy, router: Router, safety_model: SafetyModel | None, log: DecisionLog | None = None) -> OversightGate:
         cfg = policy.safety_model
-        gate = cls(router, safety_model, cfg.get("min_allow_confidence", 0.6), cfg.get("degraded_min_allow_confidence", 0.85), log)
+        gate = cls(
+            router,
+            safety_model,
+            cfg.get("min_allow_confidence", 0.6),
+            cfg.get("degraded_min_allow_confidence", 0.85),
+            log,
+            cfg.get("takeover", "veto"),
+        )
         gate.rules_id = policy.fingerprint
         return gate
 
@@ -80,6 +89,9 @@ class OversightGate:
             bar = self.degraded_min_allow_confidence if d.degraded else self.min_allow_confidence
             if verdict.verdict == Verdict.BLOCK:
                 res = GateResult(Outcome.BLOCK, d, verdict, f"safety model blocked: {verdict.rationale}")
+            elif d.degraded and self.takeover == "veto" and verdict.verdict == Verdict.ALLOW:
+                d = self.router.escalate(d, now, "checker found nothing, but it may not approve high risk actions on its own")
+                res = GateResult(Outcome.DEFER if d.deferred else Outcome.ASK_HUMAN, d, verdict, d.reasons[-1])
             elif verdict.verdict == Verdict.ALLOW and verdict.confidence >= bar:
                 res = GateResult(Outcome.EXECUTE, d, verdict, f"safety model allowed ({verdict.confidence:.2f} >= {bar})")
             else:

@@ -14,6 +14,7 @@ Writes results/heuristic/research.json. Settings were fixed before running.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import random
 import time
@@ -35,7 +36,7 @@ from oversight.sim.stats import paired_difference, ratio_ci
 ROOT = Path(__file__).resolve().parent.parent
 RECALLS = [0.2, 0.4, 0.6, 0.8, 0.9, 0.95, 1.0]
 FALSE_ALARM = 0.02
-STRATEGIES = [("adaptive", 1), ("static_risk", None), ("always_model", None), ("always_human", None)]
+STRATEGIES = [("adaptive", 1), ("adaptive_approve", 1), ("static_risk", None), ("always_model", None), ("always_human", None)]
 PACING_BUDGETS = [2, 3, 4, 6]
 
 
@@ -71,6 +72,8 @@ def main() -> None:
     registry = ToolRegistry.load(DEFAULT_TOOLS, policy)
     pool = build_pool(0)
     days = list(workdays(pool, seeds, n_eps))
+    # the checker may also approve high risk actions when it takes over, if confidence >= 0.85
+    approve = dataclasses.replace(policy, safety_model={**policy.safety_model, "takeover": "approve"})
     t0 = time.time()
 
     sweep = []
@@ -78,7 +81,8 @@ def main() -> None:
         for recall in RECALLS:
             checker = SimulatedChecker(pool, recall, FALSE_ALARM)
             for strat, budget in STRATEGIES:
-                eps = [run_episode(ev, sch, strat, policy, registry, checker, s, e, budget, human).metrics for s, e, ev, sch in days]
+                pol, name = (approve, "adaptive") if strat == "adaptive_approve" else (policy, strat)
+                eps = [run_episode(ev, sch, name, pol, registry, checker, s, e, budget, human).metrics for s, e, ev, sch in days]
                 sweep.append({"fatigue": fatigue, "recall": recall, "strategy": strat, "budget_per_hour": budget, **summarise(eps, random.Random(0))})
         print(f"{time.time() - t0:4.0f}s checker sweep, fatigue {fatigue}")
 
