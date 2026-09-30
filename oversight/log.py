@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from .schema import Decision
 
@@ -14,10 +15,16 @@ class DecisionLog:
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def append(self, d: Decision) -> None:
-        with self.path.open("a") as f:
-            f.write(json.dumps(d.to_dict()) + "\n")
+        self.write(d.to_dict())
 
-    def read(self) -> list[Decision]:
+    def write(self, record: dict[str, Any]) -> None:
+        with self.path.open("a") as f:
+            f.write(json.dumps(record, sort_keys=True) + "\n")
+
+    def records(self) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []
-        return [Decision.from_dict(json.loads(l)) for l in self.path.read_text().splitlines() if l]
+        return [json.loads(line) for line in self.path.read_text().splitlines() if line]
+
+    def read(self) -> list[Decision]:
+        return [Decision.from_dict(r) for r in self.records() if "route" in r]
