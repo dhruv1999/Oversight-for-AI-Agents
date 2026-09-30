@@ -178,7 +178,7 @@ _RULES: list[tuple[str, Verdict, re.Pattern[str]]] = [
     ("remote code execution from untrusted source", Verdict.BLOCK, re.compile(r"(curl|wget)[^|]*\|\s*(sudo\s+)?(ba|z)?sh\b")),
     ("security control weakened", Verdict.BLOCK, re.compile(
         r"principal\W+\*|\"action\"\W+\"?[\w-]*:?\*|action\W+'?[\w-]*:\*|0\.0\.0\.0/0|disable[\w\s]{0,20}(mfa|2fa|audit|logging|alert)"
-        r"|(mfa|audit|logging)[\w\s]{0,10}\b(off|disabled)\b|authorized_keys|chmod\s+777",
+        r"|(mfa|audit|logging|alerting)[\w\s.]{0,12}[:=]?\s*(off|false|disabled)\b|authorized_keys|chmod\s+(-\w+\s+)*777",
     )),
     ("payment or banking change needs review", Verdict.ESCALATE, re.compile(r"bank (account|details)|routing number|iban|new vendor|unverified vendor")),
 ]

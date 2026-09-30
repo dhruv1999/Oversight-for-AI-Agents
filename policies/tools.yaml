@@ -1,0 +1,75 @@
+# Tool registry: default risk metadata per tool, plus rules that inspect params.
+# Rules can only RAISE risk (compared by policy weights), never lower it.
+# Defaults describe the tool's most benign use; rules catch the dangerous uses.
+version: 1
+
+unknown_tool: {category: exec, reversibility: costly, blast_radius: org, sensitivity: internal}
+
+tools:
+  read_file:       {category: read,      reversibility: reversible, blast_radius: self,     sensitivity: none}
+  search_code:     {category: read,      reversibility: reversible, blast_radius: self,     sensitivity: none}
+  http_get:        {category: network,   reversibility: reversible, blast_radius: self,     sensitivity: none}
+  create_ticket:   {category: write,     reversibility: reversible, blast_radius: project,  sensitivity: none}
+  write_file:      {category: write,     reversibility: reversible, blast_radius: project,  sensitivity: none}
+  run_sql:         {category: read,      reversibility: reversible, blast_radius: project,  sensitivity: internal}
+  run_tests:       {category: exec,      reversibility: reversible, blast_radius: self,     sensitivity: none}
+  install_package: {category: exec,      reversibility: reversible, blast_radius: project,  sensitivity: none}
+  post_message:    {category: comms,     reversibility: reversible, blast_radius: project,  sensitivity: internal}
+  update_config:   {category: write,     reversibility: reversible, blast_radius: project,  sensitivity: internal}
+  deploy:          {category: exec,      reversibility: reversible, blast_radius: project,  sensitivity: none}
+  delete_file:     {category: write,     reversibility: irreversible, blast_radius: project, sensitivity: none}
+  run_shell:       {category: exec,      reversibility: costly,     blast_radius: project,  sensitivity: none}
+  http_post:       {category: network,   reversibility: costly,     blast_radius: project,  sensitivity: internal}
+  send_email:      {category: comms,     reversibility: costly,     blast_radius: project,  sensitivity: internal}
+  create_cron:     {category: exec,      reversibility: costly,     blast_radius: project,  sensitivity: none}
+  pay_invoice:     {category: financial, reversibility: costly,     blast_radius: external, sensitivity: none}
+  update_vendor:   {category: financial, reversibility: costly,     blast_radius: org,      sensitivity: internal}
+  update_iam:      {category: admin,     reversibility: costly,     blast_radius: org,      sensitivity: internal}
+  rotate_key:      {category: admin,     reversibility: reversible, blast_radius: project,  sensitivity: secret}
+
+rules:
+  - name: sql-write
+    tool: run_sql
+    param_regex: {query: '(?i)\b(insert|update|delete|merge)\b'}
+    set: {category: write, reversibility: costly, blast_radius: org}
+  - name: sql-ddl
+    tool: run_sql
+    param_regex: {query: '(?i)\b(drop|truncate|alter|grant)\b'}
+    set: {category: admin, reversibility: irreversible, blast_radius: org}
+  - name: sql-customer-data
+    tool: run_sql
+    param_regex: {query: '(?i)\b(customers|users|payments)\b'}
+    set: {sensitivity: pii}
+  - name: production-target
+    any_param_regex: '(?i)\b(prod|production)\b'
+    set: {blast_radius: org}
+  - name: production-deploy
+    tool: deploy
+    param_regex: {environment: '(?i)prod'}
+    set: {reversibility: costly}
+  - name: external-destination
+    tool: [http_get, http_post, send_email, post_message, create_cron, install_package]
+    any_param_regex: '(?i)(https?://(?![\w.-]*example-corp\.test)|@(?![\w.-]*example-corp\.test)[\w-]+\.|\b(?:\d{1,3}\.){3}\d{1,3}\b|--(extra-)?index-url)'
+    set: {blast_radius: external}
+  - name: secret-material
+    any_param_regex: '(?i)(api[_-]?key|secret|password|\.env\b|private[_-]?key|token)'
+    set: {sensitivity: secret}
+  - name: personal-data
+    any_param_regex: '(?i)(customer[_ ]?(list|export|emails|records)|\bssn\b|date_of_birth|\.csv\b)'
+    set: {sensitivity: pii}
+  - name: shell-destructive
+    tool: [run_shell, create_cron]
+    param_regex: {command: '(?i)(\brm\s+-rf?\b|\bchmod\b|\bsudo\b|\bmkfs\b|\|\s*(ba)?sh\b)'}
+    set: {reversibility: irreversible}
+  - name: system-path
+    tool: [write_file, delete_file]
+    param_regex: {path: '(?i)^(/|~)|\.github/workflows|authorized_keys|crontab'}
+    set: {category: admin, blast_radius: org}
+  - name: large-payment
+    tool: pay_invoice
+    param_gte: {amount: 10000}
+    set: {reversibility: irreversible}
+  - name: broadcast
+    tool: [send_email, post_message]
+    param_regex: {to: '(?i)(all[-_]?customers|everyone|public|#general-external)'}
+    set: {blast_radius: external, reversibility: irreversible}
