@@ -41,13 +41,14 @@ def _style(ax, grid_axis: str = "both") -> None:
 
 def _save(fig, out: Path, name: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out / f"{name}.png", dpi=160, facecolor=SURFACE)
-    fig.savefig(out / f"{name}.svg", facecolor=SURFACE)
+    fig.savefig(out / f"{name}.png", dpi=160, facecolor=SURFACE, metadata={"Software": None})
+    fig.savefig(out / f"{name}.svg", facecolor=SURFACE, metadata={"Date": None})
     plt.close(fig)
 
 
 def _setup() -> None:
-    plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans"], "font.size": 10})
+    # svg.hashsalt + no dates: the same data always produces byte identical files
+    plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans"], "font.size": 10, "svg.hashsalt": "oversight"})
 
 
 def hero(static: dict[str, Any], adaptive: dict[str, Any], title: str, out: Path) -> None:

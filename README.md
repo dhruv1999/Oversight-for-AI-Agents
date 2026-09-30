@@ -99,7 +99,7 @@ Run the proxy instead of the server. It starts the real server, offers exactly t
   "args": ["mcp", "--", "npx", "-y", "@modelcontextprotocol/server-filesystem", "/path/to/project"]}}}
 ```
 
-Install it with `pip install "oversight-for-ai-agents[mcp] @ git+https://github.com/dhruv1999/Oversight-for-AI-Agents"`. Tool names the rules do not know start as high risk; declare them in your own copy of `oversight/policies/tools.yaml` and pass it with `oversight --tools your_tools.yaml mcp -- ...`.
+Install it with `pip install "oversight-for-ai-agents[mcp] @ git+https://github.com/dhruv1999/Oversight-for-AI-Agents"`. Tool names the rules do not know start as high risk; declare them in your own copy of `oversight/policies/tools.yaml` and pass it with `oversight --tools your_tools.yaml mcp -- <server command>`.
 
 ### Claude Code
 
