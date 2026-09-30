@@ -1,0 +1,31 @@
+from pathlib import Path
+
+import pytest
+
+from oversight.schema import Action
+
+POLICY_PATH = Path(__file__).parent.parent / "policies" / "default.yaml"
+
+
+@pytest.fixture
+def policy_path():
+    return POLICY_PATH
+
+
+def make_action(**kw):
+    base = dict(
+        id="a1",
+        tool="t",
+        description="synthetic action",
+        category="read",
+        reversibility="reversible",
+        blast_radius="self",
+        sensitivity="none",
+    )
+    base.update(kw)
+    return Action(**base)
+
+
+@pytest.fixture
+def act():
+    return make_action

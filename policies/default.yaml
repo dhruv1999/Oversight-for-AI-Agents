@@ -1,0 +1,32 @@
+# Default oversight policy. Synthetic-data project: no real data anywhere.
+# Risk score = category + reversibility + blast_radius + sensitivity (max 17).
+version: 1
+
+weights:
+  category:      {read: 0, write: 2, network: 3, comms: 3, exec: 4, financial: 5, admin: 5}
+  reversibility: {reversible: 0, costly: 2, irreversible: 4}
+  blast_radius:  {self: 0, project: 1, org: 3, external: 4}
+  sensitivity:   {none: 0, internal: 1, pii: 3, secret: 4}
+
+# Minimum score (inclusive) for each tier.
+tiers:
+  low: 0
+  medium: 4
+  high: 8
+  critical: 12
+
+# Hard rules applied after scoring; a rule can only raise the tier.
+overrides:
+  - name: irreversible-admin
+    match: {category: admin, reversibility: irreversible}
+    tier: critical
+    reason: irreversible admin actions always need a human
+  - name: secrets-leaving-boundary
+    match: {sensitivity: secret, blast_radius: external}
+    tier: critical
+    reason: secrets must never leave the boundary without a human
+
+attention:
+  window_seconds: 3600
+  max_interrupts_per_window: 6
+  min_gap_seconds: 30
