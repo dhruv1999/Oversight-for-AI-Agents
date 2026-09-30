@@ -1,4 +1,4 @@
-.PHONY: check reproduce bench
+.PHONY: check reproduce bench llm-estimate llm
 
 # everything CI runs; stops at the first failure
 check:
@@ -15,3 +15,11 @@ reproduce:
 
 bench:
 	uv run python scripts/benchmark.py
+
+# the same experiments with Claude as the checker (needs ANTHROPIC_API_KEY; spending stops at MAX_SPEND_USD)
+llm-estimate:
+	uv run python scripts/run_experiments.py --reviewer anthropic --estimate
+
+llm:
+	uv run python scripts/run_experiments.py --reviewer anthropic
+	uv run python scripts/make_report.py --tag llm_claude-opus-5-5
