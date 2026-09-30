@@ -91,8 +91,8 @@ Each row changes one assumption and reruns the paired comparison on 300 identica
 | Remove: checker takes over when the budget is spent | -0.4 (-0.8 to +0.1) | -6.3 (-6.8 to -5.8) | 10.8 → 18.3 |
 | Remove: checker may only block, not approve, when it takes over | +8.0 (+6.1 to +9.9) | -7.3 (-7.9 to -6.8) | 10.8 → 2.3 |
 
-Across the 12 assumption changes, this project let through clearly less harm in 11, clearly more in 0,
-and caused clearly fewer interruptions in 12. Where a confidence interval touches 0, read it as "no worse", not "better".
+Across the 11 assumption changes, this project let through clearly less harm in 10, clearly more in 0,
+and caused clearly fewer interruptions in 11. Where a confidence interval touches 0, read it as "no worse", not "better".
 
 **Counting matters.** If every queued review counts as its own interruption instead of one sitting per queue, the saving
 drops from 6.3 to 3.0 interruptions a day. Both numbers are real; they answer different questions.

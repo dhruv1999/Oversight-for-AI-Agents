@@ -24,3 +24,21 @@ def test_committed_results_match_report():
     static = next(r for r in rows if r["fatigue"] == "on" and r["profile"] == "all" and r["strategy"] == "static_risk")
     text = (ROOT / "docs" / "results.md").read_text(encoding="utf-8")
     assert f"{static['interrupts_per_day']:.1f}" in text
+
+
+def test_hand_written_docs_quote_committed_numbers():
+    """docs/research.md quotes a few results in prose; fail if the committed results no longer say that."""
+    res = json.loads((ROOT / "results" / "heuristic" / "research.json").read_text(encoding="utf-8"))
+    rob = json.loads((ROOT / "results" / "heuristic" / "robustness.json").read_text(encoding="utf-8"))
+    doc = (ROOT / "docs" / "research.md").read_text(encoding="utf-8")
+
+    def sweep(strat, recall):
+        return next(x for x in res["checker_sweep"] if x["fatigue"] == "on" and x["strategy"] == strat and x["recall"] == recall)["harm_pct"]
+
+    def attack(strat, k):
+        return next(x for x in rob["budget_drain_attack"] if x["human"] == "fatigue on" and x["strategy"] == strat and x["burst"] == k)["success_pct"]
+
+    assert f"{sweep('adaptive_approve', 0.2):.0f}% of harmful actions versus {sweep('static_risk', 0.2):.0f}%" in doc
+    assert f"from {attack('static_risk', 0):.0f}% to {attack('static_risk', 12):.0f}%" in doc
+    assert max(attack("adaptive", k) for k in (0, 3, 6, 12)) < 13.5  # "stayed near 13% or lower"
+    assert f"across {sum(v['kind'] != 'design' for v in rob['variants']) - 1} changes" in doc

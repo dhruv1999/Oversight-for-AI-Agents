@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it."
+title: "Oversight for AI Agents: routing agent actions by risk and human attention"
+authors:
+  - alias: dhruv1999
+repository-code: "https://github.com/dhruv1999/Oversight-for-AI-Agents"
+license: MIT
+version: 0.2.0
+date-released: 2026-09-30
+keywords:
+  - AI safety
+  - AI agents
+  - human oversight
+  - scalable oversight
+  - alert fatigue

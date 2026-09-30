@@ -1,6 +1,6 @@
 [project]
 name = "oversight-for-ai-agents"
-version = "0.1.0"
+version = "0.2.0"
 description = "Adaptive oversight routing for AI agents: self, safety model, or human, based on action risk and human attention."
 requires-python = ">=3.11"
 dependencies = ["pyyaml>=6"]

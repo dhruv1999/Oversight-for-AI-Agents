@@ -14,7 +14,7 @@ The tool name and parameters are trusted as a description of what will actually 
 
 **Disguise.** Harm hidden inside a low risk tool, such as writing a script file that deletes backups when it runs later, scores low and is never reviewed. Rules in `tools.yaml` for your own tools are the main defence.
 
-**Draining attention.** An agent that triggers many harmless high risk actions can use up the interrupt budget. After that, high risk actions go to the automatic checker with a stricter bar, and critical actions still go to a person. The budget protects the person's attention, not the checker's accuracy.
+**Draining attention.** An agent that triggers many harmless high risk actions can use up the interrupt budget. After that, high risk actions go to the automatic checker, which by default may block them but not approve them, so they wait for the person; critical actions still go straight to a person. In simulation this kept a scripted drain attack from getting easier ([results](results.md#can-an-agent-game-it)). An attacker that also fools the checker's block decision is not covered.
 
 **Tricking the checker.** Text inside an action could try to talk an AI checker into approving it. The action is passed as clearly marked untrusted data and the answer must match a fixed format, which reduces but does not remove this risk.
 
