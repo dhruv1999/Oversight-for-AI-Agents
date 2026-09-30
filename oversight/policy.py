@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
 from typing import Any
@@ -40,6 +40,7 @@ class Policy:
     tiers: dict[Tier, int]
     overrides: tuple[dict[str, Any], ...]
     attention: dict[str, int]
+    safety_model: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def load(cls, path: str | Path) -> Policy:
@@ -59,9 +60,27 @@ class Policy:
             raise PolicyError("tier thresholds must be strictly increasing")
         overrides = tuple(raw.get("overrides") or ())
         for o in overrides:
-            if Tier[o["tier"].upper()] is None or not o.get("match"):
-                raise PolicyError(f"bad override: {o}")
-        return cls(int(raw["version"]), weights, tiers, overrides, dict(raw.get("attention") or {}))
+            cls._check_override(o, weights)
+        return cls(
+            int(raw["version"]),
+            weights,
+            tiers,
+            overrides,
+            dict(raw.get("attention") or {}),
+            dict(raw.get("safety_model") or {}),
+        )
+
+    @staticmethod
+    def _check_override(o: Any, weights: dict[str, dict[str, int]]) -> None:
+        if not isinstance(o, dict) or not {"name", "match", "tier", "reason"} <= set(o):
+            raise PolicyError(f"override needs name, match, tier, reason: {o}")
+        if str(o["tier"]).upper() not in Tier.__members__:
+            raise PolicyError(f"override {o['name']}: unknown tier {o['tier']!r}")
+        if not isinstance(o["match"], dict) or not o["match"]:
+            raise PolicyError(f"override {o['name']}: match must be a non-empty mapping")
+        for k, v in o["match"].items():
+            if k not in DIMENSIONS or v not in weights[k]:
+                raise PolicyError(f"override {o['name']}: bad match {k}={v!r}")
 
     def assess(self, action: Action) -> Assessment:
         score = 0
@@ -73,12 +92,19 @@ class Policy:
                 raise PolicyError(f"unknown {dim} value: {value!r}")
             score += table[value]
             reasons.append(f"{dim}={value} (+{table[value]})")
+        reasons.extend(f"note: {n}" for n in action.notes)
         tier = max(t for t in Tier if score >= self.tiers[t])
         reasons.append(f"score {score} -> tier {tier}")
         for o in self.overrides:
-            if all(getattr(action, k, None) == v for k, v in o["match"].items()):
+            if all(getattr(action, k) == v for k, v in o["match"].items()):
                 floor = Tier[o["tier"].upper()]
                 if floor > tier:
                     tier = floor
                     reasons.append(f"override {o['name']}: {o['reason']} -> tier {tier}")
         return Assessment(score, tier, tuple(reasons))
+
+    def weight(self, dim: str, value: str) -> int:
+        try:
+            return self.weights[dim][value]
+        except KeyError as e:
+            raise PolicyError(f"unknown {dim} value: {value!r}") from e

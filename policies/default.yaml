@@ -30,3 +30,9 @@ attention:
   window_seconds: 3600
   max_interrupts_per_window: 6
   min_gap_seconds: 30
+
+# How safety-model verdicts are trusted. An ALLOW below the threshold becomes ESCALATE.
+safety_model:
+  min_allow_confidence: 0.6
+  # stricter bar when a high-risk action was degraded to the model because no human was reachable
+  degraded_min_allow_confidence: 0.85

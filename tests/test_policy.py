@@ -70,3 +70,24 @@ def test_tiers_must_be_ordered(tmp_path, policy_path):
     f.write_text(text)
     with pytest.raises(PolicyError):
         Policy.load(f)
+
+
+def test_bad_override_tier_is_policy_error(tmp_path, policy_path):
+    text = policy_path.read_text().replace("tier: critical\n    reason: irreversible", "tier: catastrophic\n    reason: irreversible")
+    f = tmp_path / "bad.yaml"
+    f.write_text(text)
+    with pytest.raises(PolicyError):
+        Policy.load(f)
+
+
+def test_override_needs_name_reason_and_known_keys(tmp_path, policy_path):
+    text = policy_path.read_text().replace("match: {category: admin, reversibility: irreversible}", "match: {colour: red}")
+    f = tmp_path / "bad.yaml"
+    f.write_text(text)
+    with pytest.raises(PolicyError):
+        Policy.load(f)
+
+
+def test_action_notes_flow_into_reasons(policy_path, act):
+    r = Policy.load(policy_path).assess(act(notes=("catalog: destructive shell pattern",)))
+    assert "note: catalog: destructive shell pattern" in r.reasons

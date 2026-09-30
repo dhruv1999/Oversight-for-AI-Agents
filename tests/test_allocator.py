@@ -86,3 +86,9 @@ def test_deterministic(policy_path, act):
     assert [a.decide(x, now=i).route for i, x in enumerate(seq)] == [
         b.decide(x, now=i).route for i, x in enumerate(seq)
     ]
+
+
+def test_critical_decision_is_budget_exempt_high_is_not(policy_path, act):
+    al = make(policy_path)
+    assert al.decide(crit(act), now=0).budget_exempt
+    assert not al.decide(high(act), now=1).budget_exempt
