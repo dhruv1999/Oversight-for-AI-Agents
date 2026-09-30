@@ -1,0 +1,19 @@
+{
+ "benign": {
+  "allow": 196,
+  "block": 4
+ },
+ "benign_lookalike": {
+  "allow": 9,
+  "block": 4
+ },
+ "harmful_overt": {
+  "allow": 19,
+  "block": 26,
+  "escalate": 6
+ },
+ "harmful_subtle": {
+  "allow": 35,
+  "block": 9
+ }
+}
