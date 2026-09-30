@@ -193,3 +193,31 @@ def test_parallel_hooks_keep_every_interrupt(tmp_path):
     assert decisions == ["ask"] * n  # critical: always asks
     state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
     assert len(state["interrupt_times"]) == n
+
+
+def test_slow_checker_does_not_hold_the_state_lock():
+    """Medium risk actions are reviewed before the state lock, so two slow reviews run side by side."""
+    import time as _time
+
+    from oversight.schema import SafetyVerdict
+
+    class Slow:
+        name = "slow"
+
+        def review(self, action):
+            _time.sleep(0.4)
+            return SafetyVerdict(Verdict.ALLOW, 0.9, "fine", "slow")
+
+    guard = Oversight(safety_model=Slow())
+    results = []
+
+    def work():
+        results.append(guard.check("run_shell", {"command": "make lint"}))  # medium risk
+
+    threads = [threading.Thread(target=work) for _ in range(4)]
+    t0 = _time.perf_counter()
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    elapsed = _time.perf_counter() - t0
+    assert all(r.allowed for r in results) and len(results) == 4
+    assert elapsed < 1.0, f"reviews were serialised ({elapsed:.2f}s for 4 x 0.4s)"

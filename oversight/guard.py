@@ -21,13 +21,13 @@ from typing import Any, TypeVar, cast
 
 from .allocator import Allocator
 from .attention import AttentionTracker
-from .gate import GateResult, Outcome, OversightGate
+from .gate import GateResult, Outcome, OversightGate, safe_review
 from .log import DecisionLog
 from .policies import DEFAULT_POLICY, DEFAULT_TOOLS
-from .policy import Policy
+from .policy import Policy, Tier
 from .registry import ToolRegistry
 from .safety_model import HeuristicSafetyModel, SafetyModel
-from .schema import Action
+from .schema import Action, SafetyVerdict
 from .store import FileStore, MemoryStore, StateStore
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -74,6 +74,18 @@ class Check:
         return "\n".join([head, *(f"  {r}" for r in self.result.decision.reasons)])
 
 
+class _Answered:
+    """A checker whose answer was already computed (outside the state lock)."""
+
+    name = "precomputed"
+
+    def __init__(self, verdict: SafetyVerdict):
+        self.verdict = verdict
+
+    def review(self, action: Action) -> SafetyVerdict:
+        return self.verdict
+
+
 class ActionBlocked(Exception):
     """Raised by a protected tool when the action must not run. `check` says why."""
 
@@ -111,11 +123,11 @@ class Oversight:
         self.rules_id = f"{self.policy.fingerprint}+{self.registry.fingerprint}"
         self._clock = clock
 
-    def _gate(self, state: dict[str, Any], now: float) -> tuple[OversightGate, AttentionTracker]:
+    def _gate(self, state: dict[str, Any], now: float, checker: SafetyModel | None = None) -> tuple[OversightGate, AttentionTracker]:
         att = AttentionTracker.from_config(self.policy.attention)
         att.restore(t for t in state["interrupt_times"] if now - t < att.window_seconds)
         att.set_available(state["available"])
-        gate = OversightGate.from_policy(self.policy, Allocator(self.policy, att), self.safety_model, self.log)
+        gate = OversightGate.from_policy(self.policy, Allocator(self.policy, att), checker or self.safety_model, self.log)
         gate.rules_id = self.rules_id
         return gate, att
 
@@ -145,9 +157,14 @@ class Oversight:
     def check(self, tool: str, params: dict[str, Any] | None = None, description: str = "", call_id: str | None = None, now: float | None = None) -> Check:
         """Decide who must approve this tool call. Records the interrupt if a person is asked."""
         action = self.registry.to_action(call_id or f"call-{uuid.uuid4().hex[:12]}", tool, dict(params or {}), description or f"call {tool}")
+        # Medium risk actions always go to the checker, and the checker does not need the person's
+        # state. Review them before taking the state lock, so a slow model never makes other agents wait.
+        checker: SafetyModel | None = None
+        if self.policy.assess(action).tier == Tier.MEDIUM:
+            checker = _Answered(safe_review(self.safety_model, action))
         with self.store.transaction() as state:
             t = self._clock() if now is None else now
-            gate, att = self._gate(state, t)
+            gate, att = self._gate(state, t, checker)
             result = gate.review(action, t)
             state["interrupt_times"] = att.interrupt_times()
         return Check(action, result)

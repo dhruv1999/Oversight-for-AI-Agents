@@ -19,6 +19,17 @@ from .safety_model import SafetyModel
 from .schema import Action, Decision, Route, SafetyVerdict, Verdict
 
 
+def safe_review(safety_model: SafetyModel | None, action: Action) -> SafetyVerdict:
+    """Fail closed: a missing, crashing or over budget checker means 'ask a human', never 'allow'."""
+    if safety_model is None:
+        return SafetyVerdict(Verdict.ESCALATE, 0.0, "no safety model configured", "none", error="no_safety_model")
+    try:
+        return safety_model.review(action)
+    except Exception as e:  # includes SpendLimitExceeded
+        name = getattr(safety_model, "name", "safety_model")
+        return SafetyVerdict(Verdict.ESCALATE, 0.0, f"safety model unavailable: {type(e).__name__}", name, error=f"{type(e).__name__}: {e}")
+
+
 class Router(Protocol):
     name: str
 
@@ -102,14 +113,7 @@ class OversightGate:
         return res
 
     def _safe_review(self, action: Action) -> SafetyVerdict:
-        """Fail closed: a missing, crashing or over budget safety model means 'ask a human', never 'allow'."""
-        if self.safety_model is None:
-            return SafetyVerdict(Verdict.ESCALATE, 0.0, "no safety model configured", "none", error="no_safety_model")
-        try:
-            return self.safety_model.review(action)
-        except Exception as e:  # includes SpendLimitExceeded
-            name = getattr(self.safety_model, "name", "safety_model")
-            return SafetyVerdict(Verdict.ESCALATE, 0.0, f"safety model unavailable: {type(e).__name__}", name, error=f"{type(e).__name__}: {e}")
+        return safe_review(self.safety_model, action)
 
     def record_human(self, action: Action, approved: bool, now: float, rationale: str = "", queued: bool = False) -> None:
         if self.log:

@@ -49,6 +49,8 @@ All six go through the same `Oversight.check`, so the rules and the log format a
 
 **The person's attention is shared state, not process state.** It lives behind a `StateStore` with one operation, `transaction()`: read, decide and write as one step. `MemoryStore` serves one process; `FileStore` serves many processes on one machine with an OS file lock (Linux, macOS and Windows) and atomic replace. A failed decision is never saved. A Redis or database store only has to implement `transaction()`.
 
+**A slow checker must not block other agents.** Medium risk actions always go to the checker and do not depend on the person's state, so they are reviewed before the state lock is taken; four agents waiting on a 0.4 second model finish together instead of one after another (a test checks this). The rarer takeover path, where the budget decides whether the checker is needed, reviews inside the lock.
+
 **Every log line says which rules decided.** Records carry `log_version` and a fingerprint of the policy and tool registry files, so an auditor can tell which rules produced any past decision, even after the rules change.
 
 **Secrets never reach disk.** Parameters are redacted (API keys, passwords, tokens, private keys, bearer headers, keys named like secrets) before anything is written to the audit log or the deferred queue. The checker still sees the full parameters, because it needs them to judge.
