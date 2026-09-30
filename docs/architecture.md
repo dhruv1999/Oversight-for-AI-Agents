@@ -29,10 +29,11 @@ flowchart LR
 | Library | `Oversight()` | threads in one process | one agent in one Python process |
 | Library with shared state | `Oversight(state=".oversight")` | processes on one machine | several agents or workers acting for the same person |
 | HTTP service | `oversight serve` | every client of the service | agents in other languages, or many machines |
+| MCP proxy | `oversight mcp -- <server>` | every call through that proxy | any MCP client (desktop apps, IDEs, agent frameworks) in front of any MCP server; people are asked through MCP elicitation |
 | Claude Code hook | `oversight hook` | every Claude Code tool call in a project | a coding agent on a developer's laptop |
 | Command line | `oversight check TOOL PARAMS` | nothing | shell scripts and CI jobs (exit code says what to do) |
 
-All five go through the same `Oversight.check`, so the rules and the log format are identical everywhere.
+All six go through the same `Oversight.check`, so the rules and the log format are identical everywhere.
 
 ## Decisions and why
 
@@ -106,6 +107,6 @@ The HTTP service binds to `127.0.0.1` unless told otherwise, accepts a bearer to
 | `safety_model.py` | the LLM checker and the rules checker; the only place model calls start |
 | `adapters/` | provider SDK code (Anthropic today) |
 | `store.py` | where the attention state lives |
-| `server.py`, `cli.py`, `integrations/` | HTTP service, command line, Claude Code hook |
+| `server.py`, `cli.py`, `integrations/` | HTTP service, command line, MCP proxy, Claude Code hook |
 | `redact.py`, `cache.py`, `spend.py`, `pricing.py` | secrets, model answer cache, spending cap |
 | `sim/` | synthetic actions, workdays, schedules, simulated person and checker, statistics |

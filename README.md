@@ -90,6 +90,17 @@ curl -s localhost:8321/check -d '{"tool": "pay_invoice", "params": {"vendor": "A
  "reason": "high risk: escalate to human (human available within budget)", "reasons": [...], "rules": "223d398e6450+feb5c71ca9ae"}
 ```
 
+### Any MCP client, in front of any MCP server
+
+Run the proxy instead of the server. It starts the real server, offers exactly the same tools, and checks every call before forwarding it. When a person is needed it asks through the client's own approval prompt (MCP elicitation); a client that cannot ask gets a refusal that says why.
+
+```json
+{"mcpServers": {"filesystem": {"command": "oversight",
+  "args": ["mcp", "--", "npx", "-y", "@modelcontextprotocol/server-filesystem", "/path/to/project"]}}}
+```
+
+Install it with `pip install "oversight-for-ai-agents[mcp] @ git+https://github.com/dhruv1999/Oversight-for-AI-Agents"`. Tool names the rules do not know start as high risk; declare them in your own copy of `oversight/policies/tools.yaml` and pass it with `oversight --tools your_tools.yaml mcp -- ...`.
+
 ### Claude Code
 
 Claude Code's permission prompt becomes the person, and the budget decides how often it asks. Add this to `.claude/settings.json`:

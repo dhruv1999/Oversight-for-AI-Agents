@@ -10,7 +10,7 @@ On 300 simulated workdays it interrupted people about half as often as fixed app
 
 The result I did not expect: letting a confident but mediocre checker approve risky actions while the person is busy made things much worse (52% of harmful actions got through, against 27% with plain fixed rules). Allowed only to block, the same checker was fine. How much you can trust a checker's yes matters more than how often it says no.
 
-It works with the OpenAI Agents SDK, LangChain, Claude Code, or any language over HTTP, and a decision takes about 0.2 ms in process. Everything is reproducible from the repo, including the parts that do not work yet: the data is simulated, and the free rules checker still misses more than half of the subtle cases.
+It works with the OpenAI Agents SDK, LangChain, any MCP server, Claude Code, or any language over HTTP, and a decision takes about 0.2 ms in process. Everything is reproducible from the repo, including the parts that do not work yet: the data is simulated, and the free rules checker still misses more than half of the subtle cases.
 
 Code, data and the full write up: https://github.com/dhruv1999/Oversight-for-AI-Agents
 

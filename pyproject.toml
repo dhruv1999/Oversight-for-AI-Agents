@@ -12,6 +12,9 @@ oversight = "oversight.cli:main"
 anthropic = [
     "anthropic>=0.40",
 ]
+mcp = [
+    "mcp>=2.2",
+]
 
 [dependency-groups]
 dev = [

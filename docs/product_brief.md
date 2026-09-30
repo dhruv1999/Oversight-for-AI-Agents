@@ -30,7 +30,7 @@ Measured in simulation (see [results](results.md)): about half the interruptions
 
 **Explain every decision in plain words.** Every answer comes with the steps that produced it, and every log line names the version of the rules that made it. People trust what they can audit.
 
-**Meet developers where they are.** A decorator for any Python agent framework, an HTTP service for everything else, a command line for scripts, and a ready made hook for Claude Code. Adoption dies if the first step is "rewrite your agent".
+**Meet developers where they are.** A decorator for any Python agent framework, a proxy for any MCP server, an HTTP service for everything else, a command line for scripts, and a ready made hook for Claude Code. Adoption dies if the first step is "rewrite your agent".
 
 **Advisory before enforcement.** In Claude Code the hook can only add questions or blocks by default; it never approves anything on its own. A new safety tool has to earn the right to remove prompts.
 

@@ -535,7 +535,7 @@ So I built an open source layer that sits between an agent and its tools and dec
 
 On 300 simulated workdays it interrupted people {half} fixed approval rules ({h["adapt_int"]:.1f} times a day instead of {h["static_int"]:.1f}), and {harm_phrase(h)} got through ({h["adapt_harm"]:.1f}% of harmful actions instead of {h["static_harm"]:.1f}%). It held up when I changed the assumptions one at a time, and when I tried to wear out the reviewer on purpose.
 
-{surprise}It works with the OpenAI Agents SDK, LangChain, Claude Code, or any language over HTTP{speed}. Everything is reproducible from the repo, including the parts that do not work yet: the data is simulated, and the free rules checker still misses more than half of the subtle cases.
+{surprise}It works with the OpenAI Agents SDK, LangChain, any MCP server, Claude Code, or any language over HTTP{speed}. Everything is reproducible from the repo, including the parts that do not work yet: the data is simulated, and the free rules checker still misses more than half of the subtle cases.
 
 Code, data and the full write up: https://github.com/dhruv1999/Oversight-for-AI-Agents
 

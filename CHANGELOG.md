@@ -4,6 +4,7 @@
 
 - `Oversight`: one object, one call per tool call; `protect` decorator for any Python agent framework; `register_tool` for your own tools.
 - HTTP service (`oversight serve`), command line (`oversight check`), TypeScript client.
+- MCP proxy (`oversight mcp -- <server>`): oversight in front of any MCP server, asking people through MCP elicitation.
 - Shared attention state across processes (`state=".oversight"`), with locking that works on Linux, macOS and Windows.
 - Checkers fail closed on errors, refusals and the spending cap; secrets are removed from logs; every log line names the rules that decided.
 - `takeover: veto` is the new default: when a person is out of attention, the checker may block high risk actions but not approve them.

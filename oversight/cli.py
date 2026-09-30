@@ -3,6 +3,7 @@
     oversight check pay_invoice '{"vendor": "Acme", "amount": 420}'
     oversight serve --port 8321 --state .oversight
     oversight hook                      # Claude Code PreToolUse hook (reads the event on stdin)
+    oversight mcp -- <server command>   # put oversight in front of any MCP server
 
 `check` exits 0 when the action may run, 2 when blocked, 3 when a person must decide, 4 when it
 must wait for a person, so shell scripts and CI jobs can branch on it.
@@ -36,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8321)
     sub.add_parser("hook", help="run as a Claude Code PreToolUse hook")
+    m = sub.add_parser("mcp", help="run in front of an MCP server: oversight mcp -- <server command>")
+    m.add_argument("server", nargs=argparse.REMAINDER, help="the MCP server command and its arguments")
     args = ap.parse_args(argv)
 
     if args.cmd == "hook":
@@ -45,6 +48,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     guard = Oversight(policy=args.policy, tools=args.tools, state=Path(args.state) if args.state else None)
+    if args.cmd == "mcp":
+        command = [a for a in args.server if a != "--"]
+        if not command:
+            print("usage: oversight mcp -- <server command> [args...]", file=sys.stderr)
+            return 64
+        import anyio
+
+        from .integrations.mcp_proxy import run_proxy
+
+        anyio.run(run_proxy, command[0], command[1:], guard)
+        return 0
     if args.cmd == "check":
         try:
             params = json.loads(args.params)
