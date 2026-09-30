@@ -72,7 +72,7 @@ def main() -> None:
     srv.shutdown()
     results["machine"] = {"python": platform.python_version(), "platform": platform.platform(), "cpus": os.cpu_count()}
     out = ROOT / "results" / "benchmark.json"
-    out.write_text(json.dumps(results, indent=1))
+    out.write_text(json.dumps(results, indent=1), encoding="utf-8")
     for k, v in results.items():
         if k != "machine":
             print(f"{k:18} p50 {v['p50_ms']:.3f} ms   p99 {v['p99_ms']:.3f} ms   {v['per_second']:,.0f}/s")

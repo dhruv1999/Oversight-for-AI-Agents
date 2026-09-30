@@ -52,7 +52,7 @@ def test_medium_bash_goes_to_model(tmp_path):
 
 def test_budget_persists_across_invocations_and_defers(tmp_path, monkeypatch):
     pol = tmp_path / "p.yaml"
-    pol.write_text((DEFAULT_POLICY).read_text().replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 1"))
+    pol.write_text((DEFAULT_POLICY).read_text(encoding="utf-8").replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 1"), encoding="utf-8")
     monkeypatch.setenv("OVERSIGHT_POLICY", str(pol))
     risky = payload("Bash", command="rm -rf ./dist")
     assert decision(handle(risky, tmp_path, 0, "advisory", HeuristicSafetyModel())) == "ask"
@@ -60,20 +60,22 @@ def test_budget_persists_across_invocations_and_defers(tmp_path, monkeypatch):
     # budget spent -> degraded to heuristic (allow 0.7 < 0.85) -> escalate -> no attention -> deferred
     assert decision(second) == "deny" and "deferred" in second["hookSpecificOutput"]["permissionDecisionReason"]
     assert (tmp_path / "deferred.jsonl").exists()
-    assert json.loads((tmp_path / "state.json").read_text())["interrupt_times"] == [0]
+    assert json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))["interrupt_times"] == [0]
     assert len(DecisionLog(tmp_path / "decisions.jsonl").records()) == 2
 
 
 def test_critical_always_asks_even_over_budget(tmp_path, monkeypatch):
     pol = tmp_path / "p.yaml"
-    pol.write_text((DEFAULT_POLICY).read_text().replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 0"))
+    pol.write_text((DEFAULT_POLICY).read_text(encoding="utf-8").replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 0"), encoding="utf-8")
     monkeypatch.setenv("OVERSIGHT_POLICY", str(pol))
     out = handle(payload("Write", file_path="~/.ssh/config", content="IdentityFile ~/.ssh/deploy_private_key"), tmp_path, 0, "enforce", HeuristicSafetyModel())
     assert decision(out) == "ask" and "critical" in out["hookSpecificOutput"]["permissionDecisionReason"]
 
 
 def test_hook_process_fails_safe_on_garbage(tmp_path):
-    r = subprocess.run([sys.executable, "-m", "oversight.integrations.claude_code_hook"], input="not json", capture_output=True, text=True, cwd=ROOT)
+    r = subprocess.run(
+        [sys.executable, "-m", "oversight.integrations.claude_code_hook"], input="not json", capture_output=True, text=True, encoding="utf-8", cwd=ROOT
+    )
     assert r.returncode == 0 and json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "ask"
 
 
@@ -84,6 +86,7 @@ def test_hook_process_end_to_end(tmp_path):
         input=json.dumps(payload("Read", file_path="a")),
         capture_output=True,
         text=True,
+        encoding="utf-8",
         cwd=ROOT,
         env=env,
     )
@@ -142,6 +145,6 @@ def test_agent_loop_gates_every_call(tmp_path):
 
 
 def test_readme_quickstart_runs():
-    r = subprocess.run([sys.executable, str(ROOT / "examples" / "quickstart.py")], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, str(ROOT / "examples" / "quickstart.py")], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     assert "run_sql: execute (low risk)" in r.stdout and "pay_invoice: ask_human (high risk)" in r.stdout and "run_sql: defer (critical risk)" in r.stdout

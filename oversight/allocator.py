@@ -12,9 +12,11 @@ class Allocator:
 
     name = "adaptive"
 
-    def __init__(self, policy: Policy, attention: AttentionTracker, fallback_to_checker: bool = True):
+    def __init__(self, policy: Policy, attention: AttentionTracker, fallback_to_checker: bool = True, pacing: bool = False):
         self.policy = policy
         self.attention = attention
+        # pacing: as the budget fills up, keep the remaining interrupts for the riskiest high actions
+        self.pacing = pacing
         # False = ablation: over budget high risk actions wait for the person instead of going to the checker
         self.fallback_to_checker = fallback_to_checker
 
@@ -30,6 +32,13 @@ class Allocator:
             reasons.append("medium risk: safety model reviews")
         elif a.tier == Tier.HIGH:
             ok, why = self.attention.can_interrupt(now)
+            if ok and self.pacing:
+                bar = self._pacing_bar(now)
+                if a.score < bar:
+                    ok, why = (
+                        False,
+                        f"pacing: score {a.score} below {bar:.1f} while the budget is {self.attention.interrupts_in_window(now)}/{self.attention.max_interrupts} used",
+                    )
             if ok:
                 route = Route.HUMAN
                 reasons.append(f"high risk: escalate to human ({why})")
@@ -50,6 +59,13 @@ class Allocator:
         if route == Route.HUMAN and not deferred:
             self.attention.record_interrupt(now)
         return Decision(action.id, route, str(a.tier), a.score, tuple(reasons), now, deferred, degraded, exempt)
+
+    def _pacing_bar(self, now: float) -> float:
+        """Minimum score for a high risk interrupt: the bottom of the high tier when the budget is empty,
+        rising linearly towards the critical tier as it fills."""
+        lo, hi = self.policy.tiers[Tier.HIGH], self.policy.tiers[Tier.CRITICAL]
+        used = self.attention.interrupts_in_window(now) / max(1, self.attention.max_interrupts)
+        return lo + (hi - lo) * used
 
     def escalate(self, decision: Decision, now: float, why: str) -> Decision:
         """The safety model asked for a human. Interrupt within budget, otherwise defer (never auto-allow)."""

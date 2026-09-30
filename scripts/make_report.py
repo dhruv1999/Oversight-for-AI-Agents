@@ -24,10 +24,10 @@ HEADLINE_BUDGET = 1
 
 
 def load(tag: str):
-    rows = json.loads((ROOT / "results" / tag / "summary.json").read_text())
-    manifest = json.loads((ROOT / "results" / tag / "manifest.json").read_text())
-    acc = json.loads((ROOT / "results" / tag / "reviewer_accuracy.json").read_text())
-    paired = json.loads((ROOT / "results" / tag / "paired.json").read_text())
+    rows = json.loads((ROOT / "results" / tag / "summary.json").read_text(encoding="utf-8"))
+    manifest = json.loads((ROOT / "results" / tag / "manifest.json").read_text(encoding="utf-8"))
+    acc = json.loads((ROOT / "results" / tag / "reviewer_accuracy.json").read_text(encoding="utf-8"))
+    paired = json.loads((ROOT / "results" / tag / "paired.json").read_text(encoding="utf-8"))
     manifest["paired"] = paired
     PAIRED.clear()
     PAIRED.update(paired)
@@ -397,21 +397,21 @@ def main() -> None:
     charts.frontier(rows, ROOT / "figures", manifest["reviewer"], title)
     charts.hero(pick(rows, "on", "all", "static_risk", None), pick(rows, "on", "all", "adaptive", HEADLINE_BUDGET), hero_title(h), ROOT / "figures")
     rob_path = ROOT / "results" / args.tag / "robustness.json"
-    rob = json.loads(rob_path.read_text()) if rob_path.exists() else None
+    rob = json.loads(rob_path.read_text(encoding="utf-8")) if rob_path.exists() else None
     if rob:
         charts.robustness(rob["variants"], ROOT / "figures")
         charts.attack(rob["budget_drain_attack"], ROOT / "figures")
     manifest["robustness"] = rob
     (ROOT / "docs").mkdir(exist_ok=True)
-    (ROOT / "docs" / "results.md").write_text(results_md(rows, manifest, acc, args.tag))
-    (ROOT / "docs" / "linkedin_post.md").write_text(linkedin_post(rows))
+    (ROOT / "docs" / "results.md").write_text(results_md(rows, manifest, acc, args.tag), encoding="utf-8")
+    (ROOT / "docs" / "linkedin_post.md").write_text(linkedin_post(rows), encoding="utf-8")
     readme = ROOT / "README.md"
     if readme.exists():
-        text = readme.read_text()
+        text = readme.read_text(encoding="utf-8")
         new = re.sub(r"<!-- results:start.*?<!-- results:end -->", readme_block(rows, args.tag, manifest["reviewer"]), text, flags=re.S)
         new = re.sub(r"<!-- compare:start.*?<!-- compare:end -->", readme_compare(rows, args.tag), new, flags=re.S)
         new = re.sub(r"<!-- headline:start.*?<!-- headline:end -->", readme_headline(rows, args.tag), new, flags=re.S)
-        readme.write_text(new)
+        readme.write_text(new, encoding="utf-8")
     print(json.dumps(headline(rows), indent=1))
 
 

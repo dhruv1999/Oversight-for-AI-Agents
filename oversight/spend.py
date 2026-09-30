@@ -19,7 +19,7 @@ class SpendTracker:
         self.ledger_path = Path(ledger_path) if ledger_path else None
         self.spent_usd = 0.0
         if self.ledger_path and self.ledger_path.exists():
-            for line in self.ledger_path.read_text().splitlines():
+            for line in self.ledger_path.read_text(encoding="utf-8").splitlines():
                 if line.strip():
                     self.spent_usd += json.loads(line)["cost_usd"]
 
@@ -41,6 +41,6 @@ class SpendTracker:
         self.spent_usd += c
         if self.ledger_path:
             self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
-            with self.ledger_path.open("a") as f:
+            with self.ledger_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps({"model": model, "input_tokens": input_tokens, "output_tokens": output_tokens, "cost_usd": c}) + "\n")
         return c

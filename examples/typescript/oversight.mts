@@ -2,6 +2,8 @@
 // Start the service with `oversight serve`, then wrap any tool function with `guarded`.
 // Run this file directly: node --experimental-strip-types examples/typescript/oversight.mts
 
+import { pathToFileURL } from "node:url";
+
 export type Outcome = "execute" | "block" | "ask_human" | "defer";
 
 export interface Decision {
@@ -66,8 +68,8 @@ export class Oversight {
   }
 }
 
-// Demo: three made up tool calls.
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Demo: three made up tool calls (runs only when this file is executed directly).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const guard = new Oversight();
   const readFile = guard.guarded("read_file", async (p: { path: string }) => `contents of ${p.path}`);
   const payInvoice = guard.guarded(

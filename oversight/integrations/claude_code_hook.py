@@ -79,7 +79,7 @@ def handle(payload: dict[str, Any], state_dir: Path, now: float, mode: str = "ad
     check = guard.check(tool, params, desc, call_id=payload.get("tool_use_id") or f"cc-{now}")
     res = check.result
     if check.waiting:
-        with (state_dir / "deferred.jsonl").open("a") as f:
+        with (state_dir / "deferred.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"timestamp": now, "tool_name": payload.get("tool_name"), "tool_input": redact(payload.get("tool_input", {}))}) + "\n")
 
     tier = check.risk

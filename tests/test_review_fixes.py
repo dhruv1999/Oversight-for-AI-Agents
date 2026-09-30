@@ -82,7 +82,7 @@ def test_gate_log_is_redacted_but_checker_sees_everything(tmp_path):
     guard = Oversight(safety_model=Spy(), log_path=tmp_path / "log.jsonl")
     c = guard.check("read_file", {"path": "notes.txt", **SECRET_PARAMS})  # medium risk: goes to the checker
     assert c.result.verdict is not None
-    text = (tmp_path / "log.jsonl").read_text()
+    text = (tmp_path / "log.jsonl").read_text(encoding="utf-8")
     assert "hunter2" not in text and "sk_test_synthetic_000123" not in text
     assert seen["params"]["password"] == "hunter2"
 
@@ -191,5 +191,5 @@ def test_parallel_hooks_keep_every_interrupt(tmp_path):
     with mp.get_context("spawn").Pool(n) as pool:
         decisions = pool.map(_hook_call, [(str(tmp_path), i) for i in range(n)])
     assert decisions == ["ask"] * n  # critical: always asks
-    state = json.loads((tmp_path / "state.json").read_text())
+    state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
     assert len(state["interrupt_times"]) == n

@@ -18,7 +18,7 @@ class ResponseCache:
         self.path = Path(path) if path else None
         self._data: dict[str, dict[str, Any]] = {}
         if self.path and self.path.exists():
-            for line in self.path.read_text().splitlines():
+            for line in self.path.read_text(encoding="utf-8").splitlines():
                 if line.strip():
                     row = json.loads(line)
                     self._data[row["key"]] = row["value"]
@@ -33,5 +33,5 @@ class ResponseCache:
         self._data[key] = value
         if self.path:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            with self.path.open("a") as f:
+            with self.path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps({"key": key, "value": value}, sort_keys=True) + "\n")

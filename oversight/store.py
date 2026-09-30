@@ -86,19 +86,19 @@ class FileStore:
 
     def _read(self) -> dict[str, Any]:
         try:
-            data = json.loads(self.path.read_text())
+            data = json.loads(self.path.read_text(encoding="utf-8"))
             return {**fresh_state(), **data} if isinstance(data, dict) else fresh_state()
         except (FileNotFoundError, json.JSONDecodeError):
             return fresh_state()
 
     def _write(self, state: dict[str, Any]) -> None:
         tmp = self.path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
-        tmp.write_text(json.dumps(state))
+        tmp.write_text(json.dumps(state), encoding="utf-8")
         os.replace(tmp, self.path)
 
     @contextmanager
     def transaction(self) -> Iterator[dict[str, Any]]:
-        with self._thread_lock, (self.directory / ".lock").open("a+") as lock_file, _exclusive(lock_file):
+        with self._thread_lock, (self.directory / ".lock").open("a+", encoding="utf-8") as lock_file, _exclusive(lock_file):
             state = self._read()
             yield state
             self._write(state)

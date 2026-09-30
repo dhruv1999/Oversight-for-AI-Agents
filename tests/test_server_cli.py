@@ -49,7 +49,7 @@ def test_health_and_check_flow(server):
     assert high["outcome"] == "ask_human" and high["call_id"] == "c-9" and high["reasons"]
     assert call(url, "/answer", {"call_id": "c-9", "approved": True}) == (200, {"ok": True})
     assert call(url, "/answer", {"call_id": "c-9", "approved": True})[0] == 404  # answered once only
-    events = [json.loads(line)["event"] for line in (tmp / "log.jsonl").read_text().splitlines()]
+    events = [json.loads(line)["event"] for line in (tmp / "log.jsonl").read_text(encoding="utf-8").splitlines()]
     assert events == ["gate", "gate", "human"]
 
 
@@ -102,6 +102,7 @@ def test_typescript_client_against_live_server(server):
         ["node", "--experimental-strip-types", "--no-warnings", str(ROOT / "examples" / "typescript" / "oversight.mts")],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**os.environ, "OVERSIGHT_URL": url},
         timeout=60,
     )
@@ -120,5 +121,5 @@ def test_cli_check_exit_codes(capsys):
 
 
 def test_cli_is_installed():
-    r = subprocess.run([sys.executable, "-m", "oversight.cli", "check", "read_file", "{}"], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-m", "oversight.cli", "check", "read_file", "{}"], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0 and "read_file: execute" in r.stdout

@@ -146,7 +146,7 @@ def main() -> None:
         print(f"attack {r['human']:11} burst={r['burst']:2} {r['strategy']:12} success {r['success_pct']:.1f}% {[round(x, 1) for x in r['success_ci95']]}")
     out = ROOT / "results" / ("heuristic_quick" if args.quick else "heuristic")
     out.mkdir(parents=True, exist_ok=True)
-    (out / "robustness.json").write_text(json.dumps({"budget_per_hour": BUDGET, "variants": rows, "budget_drain_attack": attack}, indent=1))
+    (out / "robustness.json").write_text(json.dumps({"budget_per_hour": BUDGET, "variants": rows, "budget_drain_attack": attack}, indent=1), encoding="utf-8")
     print(f"wrote {out}/robustness.json in {time.time() - t0:.0f}s")
 
 

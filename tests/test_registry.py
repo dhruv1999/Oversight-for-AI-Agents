@@ -53,7 +53,7 @@ def test_email_to_internal_vs_external(reg):
 
 def test_rules_only_raise(reg, policy_path, tmp_path):
     text = (
-        TOOLS.read_text()
+        TOOLS.read_text(encoding="utf-8")
         + """
   - name: try-to-lower
     tool: update_iam
@@ -62,7 +62,7 @@ def test_rules_only_raise(reg, policy_path, tmp_path):
 """
     )
     f = tmp_path / "t.yaml"
-    f.write_text(text)
+    f.write_text(text, encoding="utf-8")
     r = ToolRegistry.load(f, Policy.load(policy_path))
     a = r.to_action("1", "update_iam", {"policy": "x"}, "x")
     assert a.category == "admin" and a.reversibility == "costly"
@@ -80,6 +80,6 @@ def test_unknown_tool_is_conservative(reg, pol):
 
 def test_bad_registry_values_rejected(policy_path, tmp_path):
     f = tmp_path / "t.yaml"
-    f.write_text(TOOLS.read_text().replace("read_file:       {category: read,", "read_file:       {category: teleport,"))
+    f.write_text(TOOLS.read_text(encoding="utf-8").replace("read_file:       {category: read,", "read_file:       {category: teleport,"), encoding="utf-8")
     with pytest.raises(PolicyError):
         ToolRegistry.load(f, Policy.load(policy_path))

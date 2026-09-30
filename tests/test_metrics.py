@@ -41,6 +41,6 @@ def test_log_roundtrip(tmp_path, policy_path, act):
     log = DecisionLog(tmp_path / "d.jsonl")
     for d in ds:
         log.append(d)
-    rows = [json.loads(line) for line in (tmp_path / "d.jsonl").read_text().splitlines()]
+    rows = [json.loads(line) for line in (tmp_path / "d.jsonl").read_text(encoding="utf-8").splitlines()]
     assert len(rows) == 4 and rows[0]["route"] == "self" and rows[0]["reasons"]
     assert [d.to_dict() for d in log.read()] == [d.to_dict() for d in ds]

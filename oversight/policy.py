@@ -46,7 +46,7 @@ class Policy:
 
     @classmethod
     def load(cls, path: str | Path) -> Policy:
-        text = Path(path).read_text()
+        text = Path(path).read_text(encoding="utf-8")
         raw = yaml.safe_load(text)
         try:
             weights = raw["weights"]

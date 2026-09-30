@@ -144,7 +144,7 @@ def main() -> None:
     reviewer = make_reviewer(args, pool, policy, registry)
 
     (ROOT / "data").mkdir(exist_ok=True)
-    with (ROOT / "data" / "action_pool.jsonl").open("w") as f:
+    with (ROOT / "data" / "action_pool.jsonl").open("w", encoding="utf-8") as f:
         for p in pool:
             f.write(json.dumps(p.to_dict(), sort_keys=True) + "\n")
 
@@ -177,14 +177,14 @@ def main() -> None:
         a = [m for p in PROFILES for m in per_ep[(fatigue, p, "adaptive", PAIRED_BUDGET)]]
         b = [m for p in PROFILES for m in per_ep[(fatigue, p, "static_risk", None)]]
         paired[f"adaptive_{PAIRED_BUDGET}_vs_static_risk_fatigue_{fatigue}"] = paired_difference(a, b, random.Random(1))
-    (out / "paired.json").write_text(json.dumps(paired, indent=1))
-    (out / "summary.json").write_text(json.dumps(rows, indent=1))
-    with (out / "summary.csv").open("w", newline="") as f:
+    (out / "paired.json").write_text(json.dumps(paired, indent=1), encoding="utf-8")
+    (out / "summary.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
+    with (out / "summary.csv").open("w", newline="", encoding="utf-8") as f:
         flat = [{**r, "harm_executed_ci95": f"{r['harm_executed_ci95'][0]:.1f}-{r['harm_executed_ci95'][1]:.1f}"} for r in rows]
         w = csv.DictWriter(f, fieldnames=list(flat[0]))
         w.writeheader()
         w.writerows(flat)
-    (out / "reviewer_accuracy.json").write_text(json.dumps(reviewer_accuracy(pool, registry, reviewer), indent=1, sort_keys=True))
+    (out / "reviewer_accuracy.json").write_text(json.dumps(reviewer_accuracy(pool, registry, reviewer), indent=1, sort_keys=True), encoding="utf-8")
     import yaml
 
     manifest = {
@@ -198,10 +198,10 @@ def main() -> None:
         "default_budget_per_hour": DEFAULT_BUDGET,
         "pool_size": len(pool),
         "pool_harmful": sum(p.harmful for p in pool),
-        "policy": yaml.safe_load((DEFAULT_POLICY).read_text()),
+        "policy": yaml.safe_load((DEFAULT_POLICY).read_text(encoding="utf-8")),
         "runtime_seconds": round(time.time() - t0, 1),
     }
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
     print(f"wrote {out}/ ({len(rows)} rows) in {time.time() - t0:.0f}s")
 
 

@@ -5,7 +5,7 @@ check:
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run mypy
-	uv run pytest -q
+	uv run python -X warn_default_encoding -W error::EncodingWarning -m pytest -q
 
 # every number and chart in the README and docs/results.md
 reproduce:

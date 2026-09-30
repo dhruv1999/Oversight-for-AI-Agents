@@ -25,7 +25,8 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
-      - run: uv run pytest -q
+      # -X warn_default_encoding + error: any file I/O that would break on Windows' cp1252 default fails the build
+      - run: uv run python -X warn_default_encoding -W error::EncodingWarning -m pytest -q
 
   frameworks:
     # the decorator inside real agent frameworks

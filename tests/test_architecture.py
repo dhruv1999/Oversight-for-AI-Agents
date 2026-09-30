@@ -10,7 +10,7 @@ DETERMINISTIC_CORE = ("policy", "attention", "allocator", "baselines")
 
 def top_level_imports(path: Path) -> set[str]:
     out = set()
-    for node in ast.walk(ast.parse(path.read_text())):
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
         if isinstance(node, ast.Import):
             out |= {a.name.split(".")[0] for a in node.names}
         elif isinstance(node, ast.ImportFrom) and node.module:
@@ -34,7 +34,7 @@ def test_deterministic_core_never_imports_models_or_adapters():
 
 def test_deterministic_core_has_no_clock_or_randomness():
     for name in ("policy", "attention", "allocator"):
-        src = (ROOT / f"{name}.py").read_text()
+        src = (ROOT / f"{name}.py").read_text(encoding="utf-8")
         assert not re.search(r"\b(import random|time\.time|datetime|monotonic)\b", src), name
 
 
@@ -42,4 +42,4 @@ def test_model_calls_only_via_safety_model_and_adapters():
     for f in ROOT.rglob("*.py"):
         if "adapters" in f.parts or f.name == "safety_model.py":
             continue
-        assert not re.search(r"\.complete\(", f.read_text()), f
+        assert not re.search(r"\.complete\(", f.read_text(encoding="utf-8")), f

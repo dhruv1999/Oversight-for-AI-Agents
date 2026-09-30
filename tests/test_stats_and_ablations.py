@@ -61,9 +61,9 @@ def test_allocator_without_checker_fallback_waits(act):
 
 
 def test_robustness_quick_run(tmp_path):
-    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "run_robustness.py"), "--quick"], capture_output=True, text=True, cwd=ROOT)
+    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "run_robustness.py"), "--quick"], capture_output=True, text=True, encoding="utf-8", cwd=ROOT)
     assert r.returncode == 0, r.stderr
-    data = json.loads((ROOT / "results" / "heuristic_quick" / "robustness.json").read_text())
+    data = json.loads((ROOT / "results" / "heuristic_quick" / "robustness.json").read_text(encoding="utf-8"))
     names = [v["name"] for v in data["variants"]]
     assert names[0] == "Baseline assumptions" and len(names) == 14
     assert {a["strategy"] for a in data["budget_drain_attack"]} == {"adaptive", "static_risk"}

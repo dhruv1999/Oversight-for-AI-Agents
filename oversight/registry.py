@@ -66,7 +66,7 @@ class ToolRegistry:
 
     @classmethod
     def load(cls, path: str | Path, policy: Policy) -> ToolRegistry:
-        text = Path(path).read_text()
+        text = Path(path).read_text(encoding="utf-8")
         raw = yaml.safe_load(text)
         rules = []
         for r in raw.get("rules") or []:

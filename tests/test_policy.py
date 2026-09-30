@@ -59,31 +59,31 @@ def test_unknown_value_rejected(policy_path, act):
 
 def test_bad_policy_rejected(tmp_path):
     f = tmp_path / "bad.yaml"
-    f.write_text("version: 1\nweights: {}\n")
+    f.write_text("version: 1\nweights: {}\n", encoding="utf-8")
     with pytest.raises(PolicyError):
         Policy.load(f)
 
 
 def test_tiers_must_be_ordered(tmp_path, policy_path):
-    text = policy_path.read_text().replace("medium: 4", "medium: 20")
+    text = policy_path.read_text(encoding="utf-8").replace("medium: 4", "medium: 20")
     f = tmp_path / "bad.yaml"
-    f.write_text(text)
+    f.write_text(text, encoding="utf-8")
     with pytest.raises(PolicyError):
         Policy.load(f)
 
 
 def test_bad_override_tier_is_policy_error(tmp_path, policy_path):
-    text = policy_path.read_text().replace("tier: critical\n    reason: irreversible", "tier: catastrophic\n    reason: irreversible")
+    text = policy_path.read_text(encoding="utf-8").replace("tier: critical\n    reason: irreversible", "tier: catastrophic\n    reason: irreversible")
     f = tmp_path / "bad.yaml"
-    f.write_text(text)
+    f.write_text(text, encoding="utf-8")
     with pytest.raises(PolicyError):
         Policy.load(f)
 
 
 def test_override_needs_name_reason_and_known_keys(tmp_path, policy_path):
-    text = policy_path.read_text().replace("match: {category: admin, reversibility: irreversible}", "match: {colour: red}")
+    text = policy_path.read_text(encoding="utf-8").replace("match: {category: admin, reversibility: irreversible}", "match: {colour: red}")
     f = tmp_path / "bad.yaml"
-    f.write_text(text)
+    f.write_text(text, encoding="utf-8")
     with pytest.raises(PolicyError):
         Policy.load(f)
 

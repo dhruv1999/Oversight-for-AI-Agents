@@ -99,5 +99,5 @@ def test_methods_do_not_leak_self_into_params(tmp_path):
             return path
 
     assert Tools().read("a") == "a"
-    logged = json.loads((tmp_path / "log.jsonl").read_text().splitlines()[0])["action"]["params"]
+    logged = json.loads((tmp_path / "log.jsonl").read_text(encoding="utf-8").splitlines()[0])["action"]["params"]
     assert logged == {"path": "a"}

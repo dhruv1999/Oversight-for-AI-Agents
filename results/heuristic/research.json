@@ -1,0 +1,792 @@
+{
+ "false_alarm": 0.02,
+ "heuristic_recall": 0.43157894736842106,
+ "checker_sweep": [
+  {
+   "fatigue": "on",
+   "recall": 0.2,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 52.02821869488536,
+   "harm_ci95": [
+    50.169779286926996,
+    53.84953805543334
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.2,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 26.895943562610228,
+   "harm_ci95": [
+    24.90101187857457,
+    28.777292576419217
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.2,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 84.12698412698413,
+   "harm_ci95": [
+    82.545293857711,
+    85.5807743658211
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.2,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 32.71604938271605,
+   "harm_ci95": [
+    30.566198382290338,
+    35.015357612988154
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.4,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 47.61904761904762,
+   "harm_ci95": [
+    45.628051486906344,
+    49.63503649635037
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.4,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 24.911816578483243,
+   "harm_ci95": [
+    22.87015945330296,
+    26.768128916741276
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.4,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 69.31216931216932,
+   "harm_ci95": [
+    67.60879318079857,
+    70.92511013215858
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.4,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 32.71604938271605,
+   "harm_ci95": [
+    30.566198382290338,
+    35.015357612988154
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.6,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 29.717813051146383,
+   "harm_ci95": [
+    27.727075184702304,
+    31.5407597097738
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.6,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 16.44620811287478,
+   "harm_ci95": [
+    14.594356261022929,
+    18.240146654445464
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.6,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 41.402116402116405,
+   "harm_ci95": [
+    39.41309255079007,
+    43.19349315068493
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.6,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 32.71604938271605,
+   "harm_ci95": [
+    30.566198382290338,
+    35.015357612988154
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.8,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 18.738977072310405,
+   "harm_ci95": [
+    17.10583153347732,
+    20.26291931097008
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.8,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 14.065255731922399,
+   "harm_ci95": [
+    12.377711612079965,
+    15.75809199318569
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.8,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 20.502645502645503,
+   "harm_ci95": [
+    18.93644617380026,
+    22.008068130883014
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.8,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 32.71604938271605,
+   "harm_ci95": [
+    30.566198382290338,
+    35.015357612988154
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.9,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 12.389770723104057,
+   "harm_ci95": [
+    10.934041611332448,
+    13.771929824561404
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.9,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 13.800705467372135,
+   "harm_ci95": [
+    12.067435669920142,
+    15.487914055505819
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.9,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 11.772486772486772,
+   "harm_ci95": [
+    10.41848299912816,
+    12.99510458388963
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.9,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 32.71604938271605,
+   "harm_ci95": [
+    30.566198382290338,
+    35.015357612988154
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.95,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 11.860670194003527,
+   "harm_ci95": [
+    10.564010743061774,
+    13.157894736842104
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.95,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 13.271604938271604,
+   "harm_ci95": [
+    11.603650586701434,
+    14.968152866242038
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.95,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 6.613756613756614,
+   "harm_ci95": [
+    5.63943161634103,
+    7.527352297592997
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "on",
+   "recall": 0.95,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 32.71604938271605,
+   "harm_ci95": [
+    30.566198382290338,
+    35.015357612988154
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "on",
+   "recall": 1.0,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 6.349206349206349,
+   "harm_ci95": [
+    5.35475234270415,
+    7.280035730236713
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "on",
+   "recall": 1.0,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 13.271604938271604,
+   "harm_ci95": [
+    11.603650586701434,
+    14.968152866242038
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "on",
+   "recall": 1.0,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 0.0,
+   "harm_ci95": [
+    0.0,
+    0.0
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "on",
+   "recall": 1.0,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 32.71604938271605,
+   "harm_ci95": [
+    30.566198382290338,
+    35.015357612988154
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.2,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 51.98412698412698,
+   "harm_ci95": [
+    50.13673655423884,
+    53.7855579868709
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.2,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 21.428571428571427,
+   "harm_ci95": [
+    19.680142159040425,
+    23.093777388255916
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.2,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 84.12698412698413,
+   "harm_ci95": [
+    82.545293857711,
+    85.5807743658211
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.2,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 4.761904761904762,
+   "harm_ci95": [
+    3.7847697218422254,
+    5.698129621574598
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.4,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 47.57495590828924,
+   "harm_ci95": [
+    45.5842997323818,
+    49.573799910273664
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.4,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 19.444444444444443,
+   "harm_ci95": [
+    17.60283060592658,
+    21.20946538124452
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.4,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 69.31216931216932,
+   "harm_ci95": [
+    67.60879318079857,
+    70.92511013215858
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.4,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 4.761904761904762,
+   "harm_ci95": [
+    3.7847697218422254,
+    5.698129621574598
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.6,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 29.673721340388006,
+   "harm_ci95": [
+    27.71518702118071,
+    31.5203426124197
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.6,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 10.97883597883598,
+   "harm_ci95": [
+    9.632829373650107,
+    12.264150943396226
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.6,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 41.402116402116405,
+   "harm_ci95": [
+    39.41309255079007,
+    43.19349315068493
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.6,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 4.761904761904762,
+   "harm_ci95": [
+    3.7847697218422254,
+    5.698129621574598
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.8,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 18.69488536155203,
+   "harm_ci95": [
+    17.071018967798853,
+    20.175438596491226
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.8,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 8.597883597883598,
+   "harm_ci95": [
+    7.3643410852713185,
+    9.869802603947921
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.8,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 20.502645502645503,
+   "harm_ci95": [
+    18.93644617380026,
+    22.008068130883014
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.8,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 4.761904761904762,
+   "harm_ci95": [
+    3.7847697218422254,
+    5.698129621574598
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.9,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 12.345679012345679,
+   "harm_ci95": [
+    10.90670170827858,
+    13.707165109034266
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.9,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 8.333333333333334,
+   "harm_ci95": [
+    7.093425605536333,
+    9.541117673784644
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.9,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 11.772486772486772,
+   "harm_ci95": [
+    10.41848299912816,
+    12.99510458388963
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.9,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 4.761904761904762,
+   "harm_ci95": [
+    3.7847697218422254,
+    5.698129621574598
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.95,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 11.81657848324515,
+   "harm_ci95": [
+    10.535635236830455,
+    13.07017543859649
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.95,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 7.804232804232805,
+   "harm_ci95": [
+    6.65790626368813,
+    8.932559178204555
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.95,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 6.613756613756614,
+   "harm_ci95": [
+    5.63943161634103,
+    7.527352297592997
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "off",
+   "recall": 0.95,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 4.761904761904762,
+   "harm_ci95": [
+    3.7847697218422254,
+    5.698129621574598
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  },
+  {
+   "fatigue": "off",
+   "recall": 1.0,
+   "strategy": "adaptive",
+   "budget_per_hour": 1,
+   "harm_pct": 6.3051146384479715,
+   "harm_ci95": [
+    5.316689782709201,
+    7.2353729343456905
+   ],
+   "interrupts_per_day": 5.47,
+   "benign_blocked_pct": 1.399462606359158
+  },
+  {
+   "fatigue": "off",
+   "recall": 1.0,
+   "strategy": "static_risk",
+   "budget_per_hour": null,
+   "harm_pct": 7.804232804232805,
+   "harm_ci95": [
+    6.65790626368813,
+    8.932559178204555
+   ],
+   "interrupts_per_day": 12.8,
+   "benign_blocked_pct": 1.0747872816838333
+  },
+  {
+   "fatigue": "off",
+   "recall": 1.0,
+   "strategy": "always_model",
+   "budget_per_hour": null,
+   "harm_pct": 0.0,
+   "harm_ci95": [
+    0.0,
+    0.0
+   ],
+   "interrupts_per_day": 0.0,
+   "benign_blocked_pct": 1.354679802955665
+  },
+  {
+   "fatigue": "off",
+   "recall": 1.0,
+   "strategy": "always_human",
+   "budget_per_hour": null,
+   "harm_pct": 4.761904761904762,
+   "harm_ci95": [
+    3.7847697218422254,
+    5.698129621574598
+   ],
+   "interrupts_per_day": 49.68,
+   "benign_blocked_pct": 3.2131661442006267
+  }
+ ],
+ "pacing": [
+  {
+   "budget_per_hour": 2,
+   "harm_diff_points": -0.04409171075837881,
+   "harm_diff_ci95": [
+    -0.2149613069647449,
+    0.09025270758122594
+   ],
+   "interrupts_diff_per_day": -0.046666666666666856,
+   "interrupts_diff_ci95": [
+    -0.07333333333333236,
+    -0.023333333333333428
+   ],
+   "episodes": 300
+  },
+  {
+   "budget_per_hour": 3,
+   "harm_diff_points": -0.3527336860670194,
+   "harm_diff_ci95": [
+    -0.650477016478751,
+    -0.0911577028258892
+   ],
+   "interrupts_diff_per_day": -0.20999999999999908,
+   "interrupts_diff_ci95": [
+    -0.26333333333333186,
+    -0.16000000000000014
+   ],
+   "episodes": 300
+  },
+  {
+   "budget_per_hour": 4,
+   "harm_diff_points": -0.26455026455026454,
+   "harm_diff_ci95": [
+    -0.49683830171635135,
+    -0.08684324793747367
+   ],
+   "interrupts_diff_per_day": -0.29666666666666686,
+   "interrupts_diff_ci95": [
+    -0.3566666666666656,
+    -0.2400000000000002
+   ],
+   "episodes": 300
+  },
+  {
+   "budget_per_hour": 6,
+   "harm_diff_points": -0.30864197530864335,
+   "harm_diff_ci95": [
+    -0.5726872246696019,
+    -0.12690355329949277
+   ],
+   "interrupts_diff_per_day": -0.4133333333333322,
+   "interrupts_diff_ci95": [
+    -0.4833333333333343,
+    -0.33999999999999986
+   ],
+   "episodes": 300
+  }
+ ]
+}
