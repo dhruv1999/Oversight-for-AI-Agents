@@ -118,12 +118,15 @@ class _Handler(BaseHTTPRequestHandler):
                 },
             )
         elif self.path == "/answer":
-            with self.server.pending_lock:
-                check = self.server.pending.pop(str(body.get("call_id")), None)
-            if check is None or not isinstance(body.get("approved"), bool):
-                self._send(404 if check is None else 400, {"error": "unknown call_id, or 'approved' is not true/false"})
+            if not isinstance(body.get("approved"), bool):
+                self._send(400, {"error": "'approved' must be true or false"})
                 return
-            guard.record_answer(check, body["approved"], str(body.get("note", "")))
+            with self.server.pending_lock:
+                pending: Check | None = self.server.pending.pop(str(body.get("call_id")), None)
+            if pending is None:
+                self._send(404, {"error": "unknown call_id (never asked, already answered, or expired)"})
+                return
+            guard.record_answer(pending, body["approved"], str(body.get("note", "")))
             self._send(200, {"ok": True})
         elif self.path == "/person":
             if not isinstance(body.get("available"), bool):
