@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --project /path/to/adaptive-oversight python -m oversight.integrations.claude_code_hook",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
