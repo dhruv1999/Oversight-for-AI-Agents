@@ -1,10 +1,9 @@
-from pathlib import Path
-
 import pytest
 
+from oversight.policies import DEFAULT_POLICY
 from oversight.schema import Action
 
-POLICY_PATH = Path(__file__).parent.parent / "policies" / "default.yaml"
+POLICY_PATH = DEFAULT_POLICY
 
 
 @pytest.fixture

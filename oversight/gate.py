@@ -14,6 +14,7 @@ from typing import Any, Protocol
 
 from .log import DecisionLog
 from .policy import Policy
+from .redact import redact, redact_text
 from .safety_model import SafetyModel
 from .schema import Action, Decision, Route, SafetyVerdict, Verdict
 
@@ -69,9 +70,7 @@ class OversightGate:
         elif d.route == Route.HUMAN:
             res = GateResult(Outcome.DEFER if d.deferred else Outcome.ASK_HUMAN, d, None, d.reasons[-1])
         else:
-            if self.safety_model is None:
-                raise RuntimeError("route is safety_model but no safety model is configured")
-            verdict = self.safety_model.review(action)
+            verdict = self._safe_review(action)
             bar = self.degraded_min_allow_confidence if d.degraded else self.min_allow_confidence
             if verdict.verdict == Verdict.BLOCK:
                 res = GateResult(Outcome.BLOCK, d, verdict, f"safety model blocked: {verdict.rationale}")
@@ -84,6 +83,16 @@ class OversightGate:
         self._log("gate", action, res)
         return res
 
+    def _safe_review(self, action: Action) -> SafetyVerdict:
+        """Fail closed: a missing, crashing or over budget safety model means 'ask a human', never 'allow'."""
+        if self.safety_model is None:
+            return SafetyVerdict(Verdict.ESCALATE, 0.0, "no safety model configured", "none", error="no_safety_model")
+        try:
+            return self.safety_model.review(action)
+        except Exception as e:  # includes SpendLimitExceeded
+            name = getattr(self.safety_model, "name", "safety_model")
+            return SafetyVerdict(Verdict.ESCALATE, 0.0, f"safety model unavailable: {type(e).__name__}", name, error=f"{type(e).__name__}: {e}")
+
     def record_human(self, action: Action, approved: bool, now: float, rationale: str = "", queued: bool = False) -> None:
         if self.log:
             self.log.write({"event": "human", "action_id": action.id, "approved": approved, "timestamp": now, "rationale": rationale, "queued": queued})
@@ -91,7 +100,10 @@ class OversightGate:
     def _log(self, event: str, action: Action, res: GateResult) -> None:
         if not self.log:
             return
-        rec: dict[str, Any] = {"event": event, "router": self.router.name, "action": asdict(action), "outcome": res.outcome.value, "reason": res.reason}
+        act = asdict(action)
+        act["params"] = redact(act["params"])
+        act["description"] = redact_text(act["description"])
+        rec: dict[str, Any] = {"event": event, "router": self.router.name, "action": act, "outcome": res.outcome.value, "reason": res.reason}
         rec.update(res.decision.to_dict())
         rec["verdict"] = res.verdict.to_dict() if res.verdict else None
         self.log.write(rec)

@@ -3,7 +3,7 @@
 ## Flow
 
 1. The agent proposes a tool call: a tool name, parameters and a short description.
-2. `ToolRegistry` turns it into an `Action` with risk metadata. Rules in `policies/tools.yaml` can only raise risk, and unknown tools get cautious defaults.
+2. `ToolRegistry` turns it into an `Action` with risk metadata. Rules in `oversight/policies/tools.yaml` can only raise risk, and unknown tools get cautious defaults.
 3. `Policy` scores the action and assigns a tier.
 4. `Allocator` picks a route from the tier and the `AttentionTracker`.
 5. `OversightGate` runs the safety model when the route calls for it and returns one of: execute, block, ask a human, or defer.
@@ -13,6 +13,7 @@
 
 | Module | Job |
 |---|---|
+| `guard.py` | `Oversight`, the simple entry point: one object, one call per tool call, thread safe |
 | `schema.py` | Action, Decision, SafetyVerdict and the enums |
 | `policy.py` | loads and checks the policy file, scores actions |
 | `registry.py` | risk metadata from tool name and parameters |
@@ -24,12 +25,13 @@
 | `adapters/` | provider SDK code (Anthropic today) |
 | `cache.py`, `spend.py`, `pricing.py` | response cache and spending cap |
 | `human.py` | console reviewer and simulated reviewer |
+| `redact.py` | removes secrets from everything written to disk |
 | `sim/` | synthetic actions, workdays, availability schedules, simulator |
 | `integrations/claude_code_hook.py` | Claude Code PreToolUse hook |
 
 ## Rules the tests enforce
 
-Provider SDKs are imported only inside `adapters/`. The router, policy and attention code import no model code and never read the clock or use randomness. Model calls go only through the safety model.
+Provider SDKs are imported only inside `adapters/`. A crashing, missing or over budget checker becomes "ask a person", never "allow". Secrets are removed from logs. Parallel Claude Code hooks share the interrupt budget through a file lock. The router, policy and attention code import no model code and never read the clock or use randomness. Model calls go only through the safety model.
 
 ## Simulation
 

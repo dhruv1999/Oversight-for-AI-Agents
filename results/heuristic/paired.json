@@ -1,0 +1,28 @@
+{
+ "adaptive_1_vs_static_risk_fatigue_on": {
+  "harm_diff_points": -3.262786596119929,
+  "harm_diff_ci95": [
+   -4.08525754884547,
+   -2.485826428259924
+  ],
+  "interrupts_diff_per_day": -6.296666666666668,
+  "interrupts_diff_ci95": [
+   -6.786666666666667,
+   -5.780000000000001
+  ],
+  "episodes": 300
+ },
+ "adaptive_1_vs_static_risk_fatigue_off": {
+  "harm_diff_points": -1.0582010582010581,
+  "harm_diff_ci95": [
+   -1.4782608695652177,
+   -0.6784260515603824
+  ],
+  "interrupts_diff_per_day": -6.296666666666668,
+  "interrupts_diff_ci95": [
+   -6.786666666666667,
+   -5.780000000000001
+  ],
+  "episodes": 300
+ }
+}

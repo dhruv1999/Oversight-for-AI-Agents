@@ -19,10 +19,13 @@ State (attention budget, audit log, deferred queue) lives in $OVERSIGHT_STATE_DI
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import sys
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -30,11 +33,11 @@ from ..allocator import Allocator
 from ..attention import AttentionTracker
 from ..gate import Outcome, OversightGate
 from ..log import DecisionLog
+from ..policies import DEFAULT_POLICY, DEFAULT_TOOLS
 from ..policy import Policy
+from ..redact import redact
 from ..registry import ToolRegistry
 from ..safety_model import HeuristicSafetyModel, SafetyModel
-
-ROOT = Path(__file__).resolve().parents[2]
 
 
 def to_registry_call(tool_name: str, tool_input: dict[str, Any]) -> tuple[str, dict[str, Any], str]:
@@ -76,25 +79,44 @@ def _reviewer(state_dir: Path) -> SafetyModel:
     )
 
 
+@contextmanager
+def _locked(state_dir: Path) -> Iterator[None]:
+    """Claude Code can run tool calls in parallel, so each hook process holds an exclusive
+    lock while it reads, decides and writes. Otherwise two hooks could both spend the last
+    interrupt in the budget."""
+    with (state_dir / ".lock").open("a") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    tmp = path.with_suffix(path.suffix + f".{os.getpid()}.tmp")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+
+
 def handle(payload: dict[str, Any], state_dir: Path, now: float, mode: str = "advisory", safety_model: SafetyModel | None = None) -> dict[str, Any]:
-    policy = Policy.load(os.environ.get("OVERSIGHT_POLICY", ROOT / "policies" / "default.yaml"))
-    registry = ToolRegistry.load(os.environ.get("OVERSIGHT_TOOLS", ROOT / "policies" / "tools.yaml"), policy)
+    policy = Policy.load(os.environ.get("OVERSIGHT_POLICY", DEFAULT_POLICY))
+    registry = ToolRegistry.load(os.environ.get("OVERSIGHT_TOOLS", DEFAULT_TOOLS), policy)
     state_dir.mkdir(parents=True, exist_ok=True)
     state_path = state_dir / "state.json"
-    state = _load_state(state_path)
-
-    att = AttentionTracker.from_config(policy.attention)
-    for t in state["interrupt_times"]:
-        if now - t < att.window_seconds:
-            att.record_interrupt(t)
-    gate = OversightGate.from_policy(policy, Allocator(policy, att), safety_model or _reviewer(state_dir), DecisionLog(state_dir / "decisions.jsonl"))
-
     tool, params, desc = to_registry_call(payload.get("tool_name", ""), payload.get("tool_input", {}))
-    action = registry.to_action(payload.get("tool_use_id") or f"cc-{now}", tool, params, desc)
-    res = gate.review(action, now)
 
-    state["interrupt_times"] = [t for t in att._times if now - t < att.window_seconds]
-    state_path.write_text(json.dumps(state))
+    with _locked(state_dir):
+        state = _load_state(state_path)
+        att = AttentionTracker.from_config(policy.attention)
+        att.restore(t for t in state["interrupt_times"] if now - t < att.window_seconds)
+        gate = OversightGate.from_policy(policy, Allocator(policy, att), safety_model or _reviewer(state_dir), DecisionLog(state_dir / "decisions.jsonl"))
+        action = registry.to_action(payload.get("tool_use_id") or f"cc-{now}", tool, params, desc)
+        res = gate.review(action, now)
+        state["interrupt_times"] = att.interrupt_times()
+        _write_atomic(state_path, json.dumps(state))
+        if res.outcome == Outcome.DEFER:
+            with (state_dir / "deferred.jsonl").open("a") as f:
+                f.write(json.dumps({"timestamp": now, "tool_name": payload.get("tool_name"), "tool_input": redact(payload.get("tool_input", {}))}) + "\n")
 
     tier = res.decision.tier
     if res.outcome == Outcome.EXECUTE:
@@ -104,9 +126,7 @@ def handle(payload: dict[str, Any], state_dir: Path, now: float, mode: str = "ad
         decision, reason = "deny", f"oversight blocked ({tier} risk): {res.reason}"
     elif res.outcome == Outcome.ASK_HUMAN:
         decision, reason = "ask", f"oversight wants a human ({tier} risk): {res.decision.reasons[-1]}"
-    else:  # DEFER: no attention left for a non-critical action -> park it, tell Claude why
-        with (state_dir / "deferred.jsonl").open("a") as f:
-            f.write(json.dumps({"timestamp": now, "tool_name": payload.get("tool_name"), "tool_input": payload.get("tool_input")}) + "\n")
+    else:  # DEFER: no attention left for a non-critical action -> parked above, tell Claude why
         decision, reason = "deny", f"oversight deferred ({tier} risk): human attention budget used up; queued in {state_dir}/deferred.jsonl for later review"
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": decision, "permissionDecisionReason": reason}}
 

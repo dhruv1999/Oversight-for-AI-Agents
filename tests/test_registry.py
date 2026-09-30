@@ -1,9 +1,10 @@
 import pytest
 
+from oversight.policies import DEFAULT_TOOLS
 from oversight.policy import Policy, PolicyError, Tier
 from oversight.registry import ToolRegistry
 
-TOOLS = __import__("pathlib").Path(__file__).parent.parent / "policies" / "tools.yaml"
+TOOLS = DEFAULT_TOOLS
 
 
 @pytest.fixture

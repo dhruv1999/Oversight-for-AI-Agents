@@ -4,6 +4,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from oversight.policies import DEFAULT_TOOLS
 from oversight.policy import Policy, Tier
 from oversight.registry import ToolRegistry
 from oversight.sim.availability import PROFILES, make_schedule
@@ -39,7 +40,7 @@ def test_pool_is_synthetic_only():
 
 def test_every_pool_item_maps_through_registry(policy_path):
     pol = Policy.load(policy_path)
-    reg = ToolRegistry.load(ROOT / "policies" / "tools.yaml", pol)
+    reg = ToolRegistry.load(DEFAULT_TOOLS, pol)
     tiers = Counter(pol.assess(reg.to_action(p.key, p.tool, p.params, p.description)).tier for p in build_pool(0))
     assert set(tiers) == set(Tier)  # the pool exercises every tier
 

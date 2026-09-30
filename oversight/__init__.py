@@ -3,6 +3,7 @@
 from .allocator import Allocator
 from .attention import AttentionTracker
 from .gate import GateResult, Outcome, OversightGate
+from .guard import Check, Oversight
 from .log import DecisionLog
 from .policy import Policy, Tier
 from .registry import ToolRegistry
@@ -11,6 +12,7 @@ from .schema import Action, Decision, Route, SafetyVerdict, Verdict
 
 __all__ = [
     "Action",
+    "Check",
     "Allocator",
     "AttentionTracker",
     "Decision",
@@ -19,6 +21,7 @@ __all__ = [
     "HeuristicSafetyModel",
     "LLMSafetyModel",
     "Outcome",
+    "Oversight",
     "OversightGate",
     "Policy",
     "Route",

@@ -21,25 +21,26 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+from oversight.cache import ResponseCache
+from oversight.policies import DEFAULT_POLICY, DEFAULT_TOOLS
+from oversight.policy import Policy
+from oversight.pricing import cost_usd
+from oversight.registry import ToolRegistry
+from oversight.safety_model import SYSTEM_PROMPT, VERDICT_SCHEMA, HeuristicSafetyModel, LLMSafetyModel, build_user_prompt
+from oversight.sim.availability import PROFILES, make_schedule
+from oversight.sim.episodes import sample_episode
+from oversight.sim.scenarios import build_pool
+from oversight.sim.simulator import run_episode
+from oversight.spend import SpendLimitExceeded, SpendTracker
 
-from oversight.cache import ResponseCache  # noqa: E402
-from oversight.policy import Policy  # noqa: E402
-from oversight.pricing import cost_usd  # noqa: E402
-from oversight.registry import ToolRegistry  # noqa: E402
-from oversight.safety_model import SYSTEM_PROMPT, VERDICT_SCHEMA, HeuristicSafetyModel, LLMSafetyModel, build_user_prompt  # noqa: E402
-from oversight.sim.availability import PROFILES, make_schedule  # noqa: E402
-from oversight.sim.episodes import sample_episode  # noqa: E402
-from oversight.sim.scenarios import build_pool  # noqa: E402
-from oversight.sim.simulator import run_episode  # noqa: E402
-from oversight.spend import SpendLimitExceeded, SpendTracker  # noqa: E402
+ROOT = Path(__file__).resolve().parent.parent
 
 SEEDS = [0, 1, 2, 3, 4]
 EPISODES_PER_SEED = 20
 BASELINES = ["no_oversight", "always_model", "static_risk", "always_human"]
 BUDGETS_PER_HOUR = [1, 2, 3, 4, 6, 10]  # adaptive sweep; 6/h is the default policy
 DEFAULT_BUDGET = 6
+PAIRED_BUDGET = 1  # the headline comparison, fixed in advance
 FATIGUE = {"on": {}, "off": {"fatigue_slope": 0.0}}
 
 
@@ -104,6 +105,32 @@ def bootstrap_ci(num: list[float], den: list[float], rng: random.Random, n: int 
     return stats[int(0.025 * n)], stats[int(0.975 * n) - 1]
 
 
+def paired_difference(a: list[dict], b: list[dict], rng: random.Random, n: int = 2000) -> dict:
+    """a minus b on the SAME episodes (same actions, schedule and human luck), bootstrapped over episodes."""
+    assert len(a) == len(b)
+    idx = range(len(a))
+
+    def stats(sample):
+        ha = sum(a[i]["harmful_executed"] for i in sample) / sum(a[i]["harmful"] for i in sample)
+        hb = sum(b[i]["harmful_executed"] for i in sample) / sum(b[i]["harmful"] for i in sample)
+        ia = sum(a[i]["interrupts"] for i in sample) / len(sample)
+        ib = sum(b[i]["interrupts"] for i in sample) / len(sample)
+        return 100 * (ha - hb), ia - ib
+
+    point = stats(list(idx))
+    draws = [stats([rng.choice(idx) for _ in idx]) for _ in range(n)]
+    harm = sorted(d[0] for d in draws)
+    intr = sorted(d[1] for d in draws)
+    lo, hi = int(0.025 * n), int(0.975 * n) - 1
+    return {
+        "harm_diff_points": point[0],
+        "harm_diff_ci95": [harm[lo], harm[hi]],
+        "interrupts_diff_per_day": point[1],
+        "interrupts_diff_ci95": [intr[lo], intr[hi]],
+        "episodes": len(a),
+    }
+
+
 def aggregate(eps: list[dict], rng: random.Random) -> dict:
     tot = defaultdict(float)
     for m in eps:
@@ -147,8 +174,8 @@ def main() -> None:
     out = Path(args.out) if args.out else ROOT / "results" / (tag + ("_quick" if args.quick else ""))
     out.mkdir(parents=True, exist_ok=True)
 
-    policy = Policy.load(ROOT / "policies" / "default.yaml")
-    registry = ToolRegistry.load(ROOT / "policies" / "tools.yaml", policy)
+    policy = Policy.load(DEFAULT_POLICY)
+    registry = ToolRegistry.load(DEFAULT_TOOLS, policy)
     pool = build_pool(0)
     reviewer = make_reviewer(args, pool, policy, registry)
 
@@ -181,6 +208,12 @@ def main() -> None:
             eps = [m for p in PROFILES for m in per_ep[(fatigue, p, strategy, budget)]]
             rows.append({"fatigue": fatigue, "profile": "all", "strategy": strategy, "budget_per_hour": budget, **aggregate(eps, rng)})
 
+    paired = {}
+    for fatigue in FATIGUE:
+        a = [m for p in PROFILES for m in per_ep[(fatigue, p, "adaptive", PAIRED_BUDGET)]]
+        b = [m for p in PROFILES for m in per_ep[(fatigue, p, "static_risk", None)]]
+        paired[f"adaptive_{PAIRED_BUDGET}_vs_static_risk_fatigue_{fatigue}"] = paired_difference(a, b, random.Random(1))
+    (out / "paired.json").write_text(json.dumps(paired, indent=1))
     (out / "summary.json").write_text(json.dumps(rows, indent=1))
     with (out / "summary.csv").open("w", newline="") as f:
         flat = [{**r, "harm_executed_ci95": f"{r['harm_executed_ci95'][0]:.1f}-{r['harm_executed_ci95'][1]:.1f}"} for r in rows]
@@ -201,7 +234,7 @@ def main() -> None:
         "default_budget_per_hour": DEFAULT_BUDGET,
         "pool_size": len(pool),
         "pool_harmful": sum(p.harmful for p in pool),
-        "policy": yaml.safe_load((ROOT / "policies" / "default.yaml").read_text()),
+        "policy": yaml.safe_load((DEFAULT_POLICY).read_text()),
         "runtime_seconds": round(time.time() - t0, 1),
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1))

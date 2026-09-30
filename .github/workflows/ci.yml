@@ -3,10 +3,27 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python }}
       - run: uv sync --extra anthropic
       - run: uv run ruff check .
       - run: uv run ruff format --check .
+      - run: uv run mypy
       - run: uv run pytest -q
+
+  install-from-scratch:
+    # what a new user does: pip install the repo into a clean environment and use it from another folder
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m venv /tmp/env && /tmp/env/bin/pip install .
+      - run: cd /tmp && /tmp/env/bin/python "$GITHUB_WORKSPACE/examples/quickstart.py"

@@ -11,7 +11,7 @@ It scores risk from the tool call itself (what it touches, whether it can be und
 
 In a simulation of 300 synthetic agent workdays per strategy, with a budget of 1 interruption per hour:
 • 49% fewer human interruptions than fixed risk tiers (12.8 → 6.5 per day)
-• No more harm let through (18.9% vs 22.1% of harmful actions executed)
+• Less harm let through (18.9% vs 22.1% of harmful actions executed)
 • The trade-off: more actions wait in a queue (10.8 → 16.5 per day)
 
 What it does not solve (yet): with a simple rule-based reviewer, about 16% of harmful actions still get through any tiered policy, mostly subtle ones that look routine. A human who never tires and reviews everything does best (4.8%), but that means 50 interruptions a day. The data is synthetic and the human is simulated, so treat these as a comparison of strategies, not real-world rates.

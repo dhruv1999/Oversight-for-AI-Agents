@@ -76,6 +76,8 @@ def parse_verdict(text: str, model: str, min_allow_confidence: float = 0.0) -> S
     match = re.search(r"\{.*\}", text or "", re.S)
     try:
         data = json.loads(match.group(0)) if match else None
+        if not isinstance(data, dict):
+            raise ValueError("not a JSON object")
         verdict = Verdict(data["verdict"])
         confidence = min(1.0, max(0.0, float(data.get("confidence", 0.0))))
         rationale = str(data.get("rationale", ""))[:MAX_RATIONALE]

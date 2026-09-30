@@ -7,6 +7,7 @@ from types import SimpleNamespace as NS
 
 from oversight.integrations.claude_code_hook import handle, to_registry_call
 from oversight.log import DecisionLog
+from oversight.policies import DEFAULT_POLICY
 from oversight.safety_model import HeuristicSafetyModel
 
 ROOT = Path(__file__).parent.parent
@@ -50,7 +51,7 @@ def test_medium_bash_goes_to_model(tmp_path):
 
 def test_budget_persists_across_invocations_and_defers(tmp_path, monkeypatch):
     pol = tmp_path / "p.yaml"
-    pol.write_text((ROOT / "policies" / "default.yaml").read_text().replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 1"))
+    pol.write_text((DEFAULT_POLICY).read_text().replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 1"))
     monkeypatch.setenv("OVERSIGHT_POLICY", str(pol))
     risky = payload("Bash", command="rm -rf ./dist")
     assert decision(handle(risky, tmp_path, 0, "advisory", HeuristicSafetyModel())) == "ask"
@@ -64,7 +65,7 @@ def test_budget_persists_across_invocations_and_defers(tmp_path, monkeypatch):
 
 def test_critical_always_asks_even_over_budget(tmp_path, monkeypatch):
     pol = tmp_path / "p.yaml"
-    pol.write_text((ROOT / "policies" / "default.yaml").read_text().replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 0"))
+    pol.write_text((DEFAULT_POLICY).read_text().replace("max_interrupts_per_window: 6", "max_interrupts_per_window: 0"))
     monkeypatch.setenv("OVERSIGHT_POLICY", str(pol))
     out = handle(payload("Write", file_path="~/.ssh/config", content="IdentityFile ~/.ssh/deploy_private_key"), tmp_path, 0, "enforce", HeuristicSafetyModel())
     assert decision(out) == "ask" and "critical" in out["hookSpecificOutput"]["permissionDecisionReason"]

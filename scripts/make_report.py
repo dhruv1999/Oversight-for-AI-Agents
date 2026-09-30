@@ -24,10 +24,10 @@ ROOT = Path(__file__).resolve().parent.parent
 SURFACE, INK, INK2, MUTED, GRID, AXIS, SERIES = "#fcfcfb", "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#2a78d6"
 LABELS = {
     "no_oversight": "No oversight",
-    "always_model": "Safety model reviews everything",
-    "static_risk": "Static risk tiers",
-    "always_human": "Human reviews everything",
-    "adaptive": "Adaptive",
+    "always_model": "Automatic checker reviews everything",
+    "static_risk": "Fixed approval rules",
+    "always_human": "Person approves everything",
+    "adaptive": "This project",
 }
 HEADLINE_BUDGET = 1
 
@@ -36,6 +36,10 @@ def load(tag: str):
     rows = json.loads((ROOT / "results" / tag / "summary.json").read_text())
     manifest = json.loads((ROOT / "results" / tag / "manifest.json").read_text())
     acc = json.loads((ROOT / "results" / tag / "reviewer_accuracy.json").read_text())
+    paired = json.loads((ROOT / "results" / tag / "paired.json").read_text())
+    manifest["paired"] = paired
+    PAIRED.clear()
+    PAIRED.update(paired)
     return rows, manifest, acc
 
 
@@ -49,7 +53,7 @@ def pick(rows, fatigue="on", profile="all", strategy=None, budget=None):
 def frontier(rows, out: Path, reviewer: str) -> None:
     plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans"], "font.size": 10})
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.6), sharey=True, facecolor=SURFACE)
-    for ax, fatigue, title in zip(axes, ("on", "off"), ("Human gets tired (alert fatigue on)", "Human never tires (fatigue off)"), strict=True):
+    for ax, fatigue, title in zip(axes, ("on", "off"), ("If the person gets tired", "If the person never gets tired"), strict=True):
         ax.set_facecolor(SURFACE)
         for s in ("top", "right"):
             ax.spines[s].set_visible(False)
@@ -68,7 +72,7 @@ def frontier(rows, out: Path, reviewer: str) -> None:
         ax.plot(xs, ys, color=SERIES, linewidth=2, solid_capstyle="round", zorder=4)
         ax.scatter(xs, ys, s=64, color=SERIES, edgecolors=SURFACE, linewidths=2, zorder=5)
         ax.annotate(
-            f"Adaptive, budget {ad[0]['budget_per_hour']}\u2192{ad[-1]['budget_per_hour']}/h",
+            "This project",
             (xs[0], ys[0]),
             xytext=(xs[0] - 2, min(ys) - 7),
             color=INK,
@@ -86,22 +90,28 @@ def frontier(rows, out: Path, reviewer: str) -> None:
                 ax.annotate(LABELS[s], (x, y), xytext=(x + 4, y + 7), color=INK2, fontsize=9, arrowprops=dict(arrowstyle="-", color=MUTED, linewidth=1))
             else:
                 dx, ha = (1.2, "left") if x < 40 else (-1.2, "right")
-                ax.annotate(LABELS[s], (x, y), xytext=(x + dx, y + (2.5 if y > 20 else 6)), color=INK2, ha=ha, fontsize=9)
-        ax.text(0.99, 0.98, "No oversight: 100% executed, 0 interrupts", transform=ax.transAxes, ha="right", va="top", color=MUTED, fontsize=8)
+                ax.annotate(LABELS[s], (x, y), xytext=(x + dx, y + (2.5 if y > 20 else 9)), color=INK2, ha=ha, fontsize=9)
+        ax.text(0.99, 0.74, "Agent does anything: 100% ran, 0 interruptions", transform=ax.transAxes, ha="right", va="top", color=MUTED, fontsize=8)
         ax.set_title(title, color=INK, fontsize=11, loc="left")
-        ax.set_xlabel("Human interrupts per workday (8 hours)", color=INK2)
+        ax.set_xlabel("Times the person was interrupted per 8 hour day", color=INK2)
         ax.set_xlim(-2, 56)
         ax.set_ylim(0, 62)
-    axes[0].set_ylabel("Harmful actions that got executed (%)", color=INK2)
+    axes[0].set_ylabel("Harmful actions that ran (%)", color=INK2)
     h = headline(rows)
     fig.suptitle(
-        f"Adaptive oversight: {h['interrupt_cut_pct']:.0f}% fewer interrupts than static tiers, {harm_phrase(h)} (lower left is better)",
+        f"{h['interrupt_cut_pct']:.0f}% fewer interruptions than fixed approval rules, and {harm_phrase(h)} (lower left is better)",
         color=INK,
         fontsize=12,
         x=0.01,
         ha="left",
     )
-    fig.text(0.01, 0.005, f"Synthetic workdays; 300 episodes per point; bars = 95% bootstrap CI. Safety model: {reviewer}.", color=MUTED, fontsize=8)
+    fig.text(
+        0.01,
+        0.005,
+        f"Made up workdays, 300 per point. Bars show 95% confidence. Blue points: 1 to 10 interruptions per hour allowed. Checker: {reviewer}.",
+        color=MUTED,
+        fontsize=8,
+    )
     fig.tight_layout(rect=(0, 0.03, 1, 0.95))
     out.mkdir(parents=True, exist_ok=True)
     fig.savefig(out / "frontier.png", dpi=160, facecolor=SURFACE)
@@ -175,10 +185,18 @@ def headline(rows) -> dict:
     }
 
 
+PAIRED: dict = {}
+
+
 def harm_phrase(h) -> str:
-    if h["adapt_harm"] <= h["static_harm"] and h["adapt_harm_off"] <= h["static_harm_off"]:
-        return "no more harm"
-    return "slightly more harm"
+    """Wording is decided by the paired test, not by eyeballing point estimates."""
+    his = [d["harm_diff_ci95"][1] for d in PAIRED.values()]
+    los = [d["harm_diff_ci95"][0] for d in PAIRED.values()]
+    if his and all(x < 0 for x in his):
+        return "less harm"
+    if los and any(x > 0 for x in los):
+        return "more harm"
+    return "no more harm"
 
 
 def fatigue_sentence(h) -> str:
@@ -221,6 +239,15 @@ A human who reviews everything and never tires is still the safest option ({h["h
 
 {table(rows, "off")}
 
+## Is the difference real?
+
+Every strategy runs on exactly the same 300 workdays (same actions, same schedules, same luck for the simulated person),
+so the fair test is the difference on each day, bootstrapped over days:
+
+{paired_table(manifest["paired"])}
+
+An interval that does not include 0 means the difference is unlikely to be noise.
+
 ## By human availability (fatigue on)
 
 {profile_table(rows)}
@@ -244,16 +271,31 @@ A human who reviews everything and never tires is still the safest option ({h["h
 """
 
 
+def paired_table(paired) -> str:
+    lines = ["| Comparison | Harm executed, difference in points (95% CI) | Interrupts per day, difference (95% CI) |", "|---|---|---|"]
+    for key, d in paired.items():
+        name = key.replace("adaptive_1_vs_static_risk_fatigue_", "Adaptive (1/h) minus static tiers, fatigue ")
+        lines.append(
+            f"| {name} | {d['harm_diff_points']:+.1f} ({d['harm_diff_ci95'][0]:+.1f} to {d['harm_diff_ci95'][1]:+.1f}) | "
+            f"{d['interrupts_diff_per_day']:+.1f} ({d['interrupts_diff_ci95'][0]:+.1f} to {d['interrupts_diff_ci95'][1]:+.1f}) |"
+        )
+    return "\n".join(lines)
+
+
 def readme_block(rows, tag, reviewer) -> str:
     h = headline(rows)
+    on = PAIRED[f"adaptive_{HEADLINE_BUDGET}_vs_static_risk_fatigue_on"]
+    off = PAIRED[f"adaptive_{HEADLINE_BUDGET}_vs_static_risk_fatigue_off"]
     return f"""<!-- results:start (generated by scripts/make_report.py from results/{tag}; do not edit) -->
-![Harm executed vs human interrupts](figures/frontier.png)
+Both approaches were run on exactly the same 300 made up workdays, so they can be compared day by day.
+With a limit of {HEADLINE_BUDGET} interruption per hour, this project interrupted the person
+{abs(on["interrupts_diff_per_day"]):.1f} fewer times a day (95% confidence: between {abs(on["interrupts_diff_ci95"][1]):.1f} and {abs(on["interrupts_diff_ci95"][0]):.1f}).
+It also let through {abs(on["harm_diff_points"]):.1f} points less harm when the simulated person gets tired
+(between {abs(on["harm_diff_ci95"][1]):.1f} and {abs(on["harm_diff_ci95"][0]):.1f}) and {abs(off["harm_diff_points"]):.1f} points less when they never tire
+(between {abs(off["harm_diff_ci95"][1]):.1f} and {abs(off["harm_diff_ci95"][0]):.1f}).
 
-With a budget of {HEADLINE_BUDGET} interrupt per hour, adaptive routing asked the human {h["interrupt_cut_pct"]:.0f}% less often than fixed
-risk tiers ({h["adapt_int"]:.1f} times a day instead of {h["static_int"]:.1f}) and let through {harm_phrase(h)} ({h["adapt_harm"]:.1f}% of harmful
-actions ran, against {h["static_harm"]:.1f}%). The cost is a longer queue: {h["adapt_def"]:.1f} actions a day waited for the human instead of {h["static_def"]:.1f}.
-
-This is synthetic data with a simulated human and a `{reviewer}` safety model. Full tables and caveats are in [docs/results.md](docs/results.md).
+The cost is a longer queue: {h["adapt_def"]:.1f} actions a day waited for the person instead of {h["static_def"]:.1f}.
+The checker used here is the free `{reviewer}` one. Every table is in [docs/results.md](docs/results.md).
 <!-- results:end -->"""
 
 
@@ -276,6 +318,25 @@ def readme_compare(rows, tag) -> str:
         lines.append(f"| {name} | {on['harm_executed_pct']:.0f}% | {on['interrupts_per_day']:.0f} | {off['harm_executed_pct']:.0f}% |")
     lines.append("<!-- compare:end -->")
     return "\n".join(lines)
+
+
+def noise_phrase(d) -> str:
+    lo, hi = d["harm_diff_ci95"]
+    if hi < 0 or lo > 0:
+        return "a real difference, not noise"
+    return "a difference within the noise"
+
+
+def readme_headline(rows, tag) -> str:
+    h = headline(rows)
+    d = PAIRED[f"adaptive_{HEADLINE_BUDGET}_vs_static_risk_fatigue_on"]
+    return f"""<!-- headline:start (generated by scripts/make_report.py from results/{tag}; do not edit) -->
+In 300 simulated workdays it interrupted people **{h["interrupt_cut_pct"]:.0f}% less** than fixed approval rules
+({h["adapt_int"]:.1f} times a day instead of {h["static_int"]:.1f}) and let through **{harm_phrase(h)}**
+({h["adapt_harm"]:.1f}% of harmful actions instead of {h["static_harm"]:.1f}%; {noise_phrase(d)}).
+
+![Harmful actions that ran vs how often a person was interrupted](figures/frontier.png)
+<!-- headline:end -->"""
 
 
 def linkedin_post(rows) -> str:
@@ -320,6 +381,7 @@ def main() -> None:
         text = readme.read_text()
         new = re.sub(r"<!-- results:start.*?<!-- results:end -->", readme_block(rows, args.tag, manifest["reviewer"]), text, flags=re.S)
         new = re.sub(r"<!-- compare:start.*?<!-- compare:end -->", readme_compare(rows, args.tag), new, flags=re.S)
+        new = re.sub(r"<!-- headline:start.*?<!-- headline:end -->", readme_headline(rows, args.tag), new, flags=re.S)
         readme.write_text(new)
     print(json.dumps(headline(rows), indent=1))
 

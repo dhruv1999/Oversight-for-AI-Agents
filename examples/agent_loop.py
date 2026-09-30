@@ -13,23 +13,22 @@ so the agent can adapt instead of silently failing.
 from __future__ import annotations
 
 import argparse
-import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+from oversight.allocator import Allocator
+from oversight.attention import AttentionTracker
+from oversight.gate import Outcome, OversightGate
+from oversight.human import ConsoleHuman, HumanDecision, HumanReviewer
+from oversight.log import DecisionLog
+from oversight.policies import DEFAULT_POLICY, DEFAULT_TOOLS
+from oversight.policy import Policy
+from oversight.registry import ToolRegistry
+from oversight.safety_model import HeuristicSafetyModel
 
-from oversight.allocator import Allocator  # noqa: E402
-from oversight.attention import AttentionTracker  # noqa: E402
-from oversight.gate import Outcome, OversightGate  # noqa: E402
-from oversight.human import ConsoleHuman, HumanDecision, HumanReviewer  # noqa: E402
-from oversight.log import DecisionLog  # noqa: E402
-from oversight.policy import Policy  # noqa: E402
-from oversight.registry import ToolRegistry  # noqa: E402
-from oversight.safety_model import HeuristicSafetyModel  # noqa: E402
+ROOT = Path(__file__).resolve().parent.parent
 
 MODEL = "claude-opus-5-5"
 
@@ -147,8 +146,8 @@ def run_agent(
 
 
 def build_gate(log_path: Path) -> tuple[OversightGate, ToolRegistry]:
-    policy = Policy.load(ROOT / "policies" / "default.yaml")
-    registry = ToolRegistry.load(ROOT / "policies" / "tools.yaml", policy)
+    policy = Policy.load(DEFAULT_POLICY)
+    registry = ToolRegistry.load(DEFAULT_TOOLS, policy)
     gate = OversightGate.from_policy(policy, Allocator(policy, AttentionTracker.from_config(policy.attention)), HeuristicSafetyModel(), DecisionLog(log_path))
     return gate, registry
 

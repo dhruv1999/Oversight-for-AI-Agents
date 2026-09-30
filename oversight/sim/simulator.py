@@ -30,8 +30,8 @@ def make_router(name: str, policy: Policy, budget_per_hour: float | None = None,
         window = cfg["window_seconds"]
         budget = cfg["max_interrupts_per_window"] if budget_per_hour is None else budget_per_hour * window / 3600
         gap = cfg["min_gap_seconds"] if min_gap_seconds is None else min_gap_seconds
-        return Allocator(policy, AttentionTracker(window, int(round(budget)), gap))
-    att = AttentionTracker(3600, UNLIMITED, 0)
+        return Allocator(policy, AttentionTracker(window, int(round(budget)), gap, keep_history=True))
+    att = AttentionTracker(3600, UNLIMITED, 0, keep_history=True)
     cls = {"no_oversight": NoOversight, "always_model": AlwaysModel, "static_risk": StaticRisk, "always_human": AlwaysHuman}[name]
     return cls(policy, att)
 
@@ -148,7 +148,7 @@ def score(rows, att: AttentionTracker, schedule: Schedule, live: int, batches: i
     benign = [r for r in rows if not r["harmful"]]
     deferred = [r for r in rows if r["outcome"] == "defer"]
     delays = [r["resolved_at"] - r["t"] for r in deferred if r["resolved_at"] is not None]
-    times = att._times
+    times = att.history()
     max_hour = max((sum(1 for x in times if s <= x < s + 3600) for s in times), default=0)
     routes = Counter(r["route"] for r in rows)
     return {

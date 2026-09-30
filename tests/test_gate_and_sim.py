@@ -9,6 +9,7 @@ from oversight.baselines import AlwaysHuman, AlwaysModel, NoOversight, StaticRis
 from oversight.gate import Outcome, OversightGate
 from oversight.human import ConsoleHuman, SimulatedHuman, stable_uniform
 from oversight.log import DecisionLog
+from oversight.policies import DEFAULT_POLICY, DEFAULT_TOOLS
 from oversight.policy import Policy
 from oversight.registry import ToolRegistry
 from oversight.safety_model import HeuristicSafetyModel
@@ -149,8 +150,8 @@ def test_console_human(act):
 # ---------------- simulator ----------------
 @pytest.fixture(scope="module")
 def world():
-    pol = Policy.load(ROOT / "policies" / "default.yaml")
-    reg = ToolRegistry.load(ROOT / "policies" / "tools.yaml", pol)
+    pol = Policy.load(DEFAULT_POLICY)
+    reg = ToolRegistry.load(DEFAULT_TOOLS, pol)
     pool = build_pool(0)
     events = sample_episode(pool, random.Random(11))
     return pol, reg, events

@@ -1,6 +1,6 @@
 # Risk taxonomy
 
-Each action is described on four axes. The score is the sum of the weights (0 to 17), as set in `policies/default.yaml`.
+Each action is described on four axes. The score is the sum of the weights (0 to 17), as set in `oversight/policies/default.yaml`.
 
 | Axis | Values (weight) |
 |---|---|
