@@ -202,7 +202,7 @@ def main() -> None:
         "runtime_seconds": round(time.time() - t0, 1),
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
-    print(f"wrote {out.relative_to(ROOT)}/ ({len(rows)} rows) in {time.time() - t0:.0f}s")
+    print(f"wrote {out}/ ({len(rows)} rows) in {time.time() - t0:.0f}s")
 
 
 if __name__ == "__main__":
