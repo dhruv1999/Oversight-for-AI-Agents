@@ -137,3 +137,9 @@ def test_agent_loop_gates_every_call(tmp_path):
     assert len(lines) == 3
     events = [r["event"] for r in DecisionLog(tmp_path / "log.jsonl").records()]
     assert events.count("gate") == 3 and events.count("human") == 2
+
+
+def test_readme_quickstart_runs():
+    r = subprocess.run([sys.executable, str(ROOT / "examples" / "quickstart.py")], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "run_sql: execute (low risk)" in r.stdout and "pay_invoice: ask_human (high risk)" in r.stdout and "run_sql: defer (critical risk)" in r.stdout
