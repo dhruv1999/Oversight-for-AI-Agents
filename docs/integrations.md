@@ -22,6 +22,8 @@ guard.register_tool("read_report", category="read", blast_radius="self")  # tell
 def pay_invoice(vendor: str, amount: float) -> str: ...
 ```
 
+With the OpenAI Agents SDK, also pass `failure_error_function=tool_error_message` (from `oversight.integrations.openai_agents`) to `@function_tool`. Since version 0.23 the SDK hides tool errors from the model by default; this helper lets oversight refusals through so the agent knows why it was stopped, and keeps every other error hidden.
+
 You can also call it directly. `guard.check(tool, params)` tells you whether the action may run, needs a person, has to wait, or is blocked, and `check.explain()` gives the reasons. Call `guard.person_away()` and `guard.person_back()` when the reviewer steps out, and `guard.record_answer(check, approved=True)` to log what they decided.
 
 Working examples, which CI runs against the real frameworks:

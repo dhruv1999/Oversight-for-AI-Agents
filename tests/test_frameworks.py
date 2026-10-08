@@ -23,10 +23,12 @@ def test_openai_agents_sdk():
     agents = pytest.importorskip("agents")
     from agents.tool_context import ToolContext
 
+    from oversight.integrations.openai_agents import tool_error_message
+
     guard = Oversight(clock=lambda: 0.0)
     ran = []
 
-    @agents.function_tool
+    @agents.function_tool(failure_error_function=tool_error_message)
     @guard.protect()
     def pay_invoice(vendor: str, amount: float) -> str:
         """Pay an approved vendor invoice."""
@@ -61,3 +63,20 @@ def test_langchain():
     assert read_report.invoke({"path": "a"}) == "contents of a"
     with pytest.raises(ActionBlocked):
         pay_invoice.invoke({"vendor": "Acme", "amount": 420})
+
+
+def test_tool_error_message_only_reveals_oversight_refusals():
+    from oversight import ActionBlocked
+    from oversight.integrations.openai_agents import GENERIC, tool_error_message
+
+    check = Oversight(clock=lambda: 0.0).check("pay_invoice", {"vendor": "Acme", "amount": 420})
+    refusal = ActionBlocked(check)
+    assert tool_error_message(None, refusal).startswith("pay_invoice was not run")
+    try:
+        try:
+            raise refusal
+        except ActionBlocked as inner:
+            raise RuntimeError("wrapped by the framework") from inner
+    except RuntimeError as wrapped:
+        assert tool_error_message(None, wrapped).startswith("pay_invoice was not run")
+    assert tool_error_message(None, ValueError("db password is hunter2")) == GENERIC
