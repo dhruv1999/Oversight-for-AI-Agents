@@ -57,11 +57,18 @@ Run it as a small service and call it from anything that can send a request. A t
 oversight serve --port 8321 --state .oversight
 
 curl -s localhost:8321/check -d '{"tool": "pay_invoice", "params": {"vendor": "Acme", "amount": 420}}'
-{"call_id": "call-c7250ed81fc4", "outcome": "ask_human", "risk": "high",
- "reason": "high risk: escalate to human (human available within budget)", "reasons": [...], "rules": "223d398e6450+feb5c71ca9ae"}
+{"call_id": "call-dc74a9130b4b", "outcome": "ask_human", "risk": "high",
+ "reason": "high risk: escalate to human (human available within budget)",
+ "summary": "High risk, and the reviewer has attention left this hour.", "reasons": [...], "rules": "223d398e6450+feb5c71ca9ae"}
 ```
 
-The service also accepts `POST /answer` to record a person's decision and `POST /person` to mark them away or back. It listens on localhost only unless told otherwise, and `OVERSIGHT_TOKEN` turns on bearer token authentication.
+Open the address it prints in a browser to get the review page. The person sees how many questions they have left this hour, approves or rejects what is waiting (with an optional note for the audit log), and marks themselves away or back. Actions that were queued while they were away wait there too.
+
+![The review page: questions left this hour, actions waiting for a decision, and approve or reject buttons](../figures/review_page.png)
+
+An agent that wants the person to decide on that page polls `GET /checks/<call_id>` until it says `approved` or `rejected`. The TypeScript client does this for you: pass `"review-page"` as the third argument to `guarded`. Agents that ask people some other way, in Slack for example, record the answer with `POST /answer` instead. `POST /person` marks the person away or back, and `GET /inbox` returns everything the page shows.
+
+The service listens on localhost only unless told otherwise. `OVERSIGHT_TOKEN` turns on bearer token authentication; set it whenever anyone else can reach the service. How the page is protected is in the [threat model](threat_model.md#the-review-page).
 
 ## Claude Code
 
@@ -80,3 +87,5 @@ oversight check run_sql '{"query": "DROP TABLE orders"}'
 ```
 
 This prints the decision and its reasons, then exits with 0 when the action may run, 2 when it is blocked, 3 when a person must decide, and 4 when it has to wait. Shell scripts and CI jobs can branch on that.
+
+![Output of oversight check for a read only query, which runs, and an $18,500 payment, which needs a person](../figures/terminal.png)

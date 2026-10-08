@@ -77,7 +77,11 @@ def main(argv: list[str] | None = None) -> int:
     from .server import serve
 
     server = serve(args.host, args.port, guard)
-    print(f"oversight listening on http://{args.host}:{server.server_port}  (rules {guard.rules_id})", flush=True)
+    url = f"http://{args.host}:{server.server_port}"
+    print(f"oversight listening on {url}  (rules {guard.rules_id})", flush=True)
+    print(f"review page: {url}/", flush=True)
+    if not server.token and not server.loopback:
+        print("warning: reachable from other machines without a token; set OVERSIGHT_TOKEN", file=sys.stderr, flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

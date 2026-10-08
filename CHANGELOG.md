@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Review page in `oversight serve`: the person sees how much attention they have left, approves or rejects waiting and queued actions with a note for the audit log, and steps away or comes back. Protected against markup from the agent, other web sites and framing; tested in a real browser.
+- `GET /checks/<call_id>` so an agent can wait for the answer given on the page; `"review-page"` option in the TypeScript client.
+- `Check.summary`: one plain sentence saying what happens to an action and why. `Oversight.attention()`: questions used, limit and when the next one may come.
+- Screenshots in the README, taken from the real page by `scripts/screenshots.py`.
+
 ## 0.2.0
 
 - `Oversight`: one object, one call per tool call; `protect` decorator for any Python agent framework; `register_tool` for your own tools.

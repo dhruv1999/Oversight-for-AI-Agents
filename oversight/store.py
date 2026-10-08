@@ -100,5 +100,7 @@ class FileStore:
     def transaction(self) -> Iterator[dict[str, Any]]:
         with self._thread_lock, (self.directory / ".lock").open("a+", encoding="utf-8") as lock_file, _exclusive(lock_file):
             state = self._read()
+            before = json.dumps(state, sort_keys=True)
             yield state
-            self._write(state)
+            if json.dumps(state, sort_keys=True) != before:  # reads, such as the review page polling, write nothing
+                self._write(state)

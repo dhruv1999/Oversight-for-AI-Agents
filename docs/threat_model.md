@@ -21,3 +21,15 @@ The tool name and parameters are trusted as a description of what will actually 
 **Local state.** The Claude Code hook keeps its state in `.oversight/`. Anything that can edit those files can reset the budget. The hook is a guardrail inside a trusted environment, not a sandbox.
 
 **Unknown tools** get cautious defaults (high risk), so they reach a person or the checker rather than running unchecked.
+
+## The review page
+
+The page that `oversight serve` shows the person is a target in its own right, because whoever can press Approve there can let an action run.
+
+**Markup from the agent.** Parameters and descriptions come from the agent and could contain HTML meant to mislead the reviewer. The page only ever inserts them as text, never as markup (a test fails if the page uses `innerHTML` or similar), and a strict content security policy with a fresh nonce on every load blocks any script the page did not ship with. A browser test plants markup in an action and checks it is shown as plain text.
+
+**Other web sites.** A page the person happens to visit could send requests to the service on localhost. Without a token the service only answers requests addressed to localhost, which defeats DNS rebinding, and it refuses any request whose `Origin` is another site. With a token, every data request needs it, and a browser on another site cannot add it.
+
+**Framing.** The page cannot be shown inside another site's frame (`frame-ancestors 'none'` and `X-Frame-Options: DENY`), so nobody can overlay it and trick a click on Approve.
+
+**Not covered.** Anyone who can open the page from the same machine without a token can answer the queue. Set `OVERSIGHT_TOKEN` wherever more than one person can reach the service, and put it behind TLS if it leaves the machine.

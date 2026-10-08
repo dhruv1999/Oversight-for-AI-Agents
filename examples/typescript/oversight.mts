@@ -1,5 +1,6 @@
 // A typed client for the oversight HTTP service, for agents written in TypeScript or JavaScript.
 // Start the service with `oversight serve`, then wrap any tool function with `guarded`.
+// Pass "review-page" as the third argument to let the person decide on the service's review page.
 // Run this file directly: node --experimental-strip-types examples/typescript/oversight.mts
 
 import { pathToFileURL } from "node:url";
@@ -11,8 +12,15 @@ export interface Decision {
   outcome: Outcome;
   risk: "low" | "medium" | "high" | "critical";
   reason: string;
+  summary: string;
   reasons: string[];
   rules: string;
+}
+
+export interface Status {
+  call_id: string;
+  status: "waiting" | "approved" | "rejected";
+  note?: string;
 }
 
 export class Oversight {
@@ -24,10 +32,14 @@ export class Oversight {
     this.token = token;
   }
 
+  private auth(): Record<string, string> {
+    return this.token ? { Authorization: `Bearer ${this.token}` } : {};
+  }
+
   private async post<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(this.url + path, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}) },
+      headers: { "Content-Type": "application/json", ...this.auth() },
       body: JSON.stringify(body),
     });
     const data = (await res.json()) as T;
@@ -49,16 +61,39 @@ export class Oversight {
     return this.post("/person", { available });
   }
 
-  // Wrap a tool so it only runs when oversight allows it. `ask` puts the question to a person.
+  // Where a waiting action stands: still waiting, approved or rejected on the review page. undefined if unknown.
+  async status(callId: string): Promise<Status | undefined> {
+    const res = await fetch(`${this.url}/checks/${encodeURIComponent(callId)}`, { headers: this.auth() });
+    if (res.status === 404) return undefined;
+    if (!res.ok) throw new Error(`oversight /checks failed with ${res.status}`);
+    return (await res.json()) as Status;
+  }
+
+  // Wait until the person answers on the review page. Nobody answering in time means "do not run it".
+  async waitForAnswer(callId: string, timeoutMs = 10 * 60_000, intervalMs = 2000): Promise<boolean> {
+    const end = Date.now() + timeoutMs;
+    while (Date.now() < end) {
+      const s = await this.status(callId);
+      if (s === undefined) return false;
+      if (s.status !== "waiting") return s.status === "approved";
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+    return false;
+  }
+
+  // Wrap a tool so it only runs when oversight allows it. `ask` puts the question to a person, or
+  // "review-page" waits for their answer on the service's review page (queued actions included).
   guarded<P extends Record<string, unknown>, R>(
     tool: string,
     fn: (params: P) => Promise<R>,
-    ask?: (d: Decision) => Promise<boolean>,
+    ask?: ((d: Decision) => Promise<boolean>) | "review-page",
   ): (params: P) => Promise<R> {
     return async (params: P) => {
       const d = await this.check(tool, params);
       if (d.outcome === "execute") return fn(params);
-      if (d.outcome === "ask_human" && ask) {
+      if (ask === "review-page" && (d.outcome === "ask_human" || d.outcome === "defer")) {
+        if (await this.waitForAnswer(d.call_id)) return fn(params);
+      } else if (d.outcome === "ask_human" && ask) {
         const approved = await ask(d);
         await this.answer(d.call_id, approved);
         if (approved) return fn(params);

@@ -39,6 +39,21 @@ jobs:
       - run: uv sync
       - run: uv run --with openai-agents --with langchain-core pytest -q tests/test_frameworks.py
 
+  review-page:
+    # the review page in a real browser: approving, stepping away, and markup from the agent shown as text
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install -g playwright@1.56.1 && npx -y playwright@1.56.1 install --with-deps chromium
+      - run: uv sync
+      - run: OVERSIGHT_REQUIRE_BROWSER=1 uv run pytest -q tests/test_review_page.py
+
   install-from-scratch:
     # what a new user does: pip install the repo into a clean environment and use it from another folder
     runs-on: ubuntu-latest
@@ -50,3 +65,4 @@ jobs:
       - run: python -m venv /tmp/env && /tmp/env/bin/pip install .
       - run: cd /tmp && /tmp/env/bin/python "$GITHUB_WORKSPACE/examples/quickstart.py"
       - run: cd /tmp && /tmp/env/bin/oversight check pay_invoice '{"vendor":"Acme","amount":420}' || test $? -eq 3
+      - run: cd /tmp && /tmp/env/bin/python -c "from oversight.server import PAGE; assert PAGE.is_file(), PAGE"

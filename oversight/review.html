@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oversight review</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232a78d6'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+<style nonce="__NONCE__">
+:root {
+  --page: #f9f9f7; --card: #ffffff; --well: #f4f3ef;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --line: #e1e0d9; --ring: rgba(11, 11, 11, 0.10);
+  --accent: #2a78d6; --accent-hover: #256abf; --accent-soft: #cde2fb; --on-accent: #ffffff;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "JetBrains Mono", "DejaVu Sans Mono", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0d0d0d; --card: #1a1a19; --well: #232322;
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --line: #2c2c2a; --ring: rgba(255, 255, 255, 0.10);
+    --accent: #3987e5; --accent-hover: #5598e7; --accent-soft: #0d366b;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font: 15px/1.5 var(--sans); }
+button, input { font: inherit; color: inherit; }
+code, .mono { font-family: var(--mono); }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; background: var(--card); border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 16px; }
+.brand .sub { color: var(--muted); font-weight: 500; }
+.mark { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; }
+.mark::after { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid var(--on-accent); }
+.presence { display: flex; align-items: center; gap: 12px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--good); }
+.dot.away { background: var(--muted); }
+
+main { max-width: 1080px; margin: 0 auto; padding: 24px; }
+.banner { margin: 0 0 20px; padding: 12px 16px; border-radius: 10px; background: var(--well); border: 1px solid var(--line); color: var(--ink-2); }
+.banner b { color: var(--ink); }
+
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 32px; }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.tile .label { color: var(--ink-2); font-size: 13px; font-weight: 550; }
+.tile .value { font-size: 30px; font-weight: 650; line-height: 1.25; margin: 6px 0 10px; letter-spacing: -0.01em; }
+.tile .value .of { font-size: 17px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+.tile .note { color: var(--ink-2); font-size: 13px; }
+.meter { display: flex; gap: 2px; height: 8px; margin-bottom: 10px; }
+.meter .seg { flex: 1; background: var(--accent-soft); }
+.meter .seg:first-child { border-radius: 4px 0 0 4px; }
+.meter .seg:last-child { border-radius: 0 4px 4px 0; }
+.meter .seg.on { background: var(--accent); }
+.meter.full .seg.on { background: var(--serious); }
+.glyph { display: inline-block; width: 1.1em; text-align: center; }
+
+section { margin-bottom: 36px; }
+h2 { font-size: 17px; font-weight: 650; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.count { font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--well); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
+.hint { color: var(--ink-2); font-size: 14px; margin: 0 0 14px; }
+.list { display: grid; gap: 12px; }
+.empty { color: var(--muted); font-size: 14px; border: 1px dashed var(--line); border-radius: 10px; padding: 14px 16px; margin: 0; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 10px; padding: 14px 18px; transition: opacity .2s; }
+.card.risk-critical { border-left-color: var(--critical); }
+.card.risk-high { border-left-color: var(--serious); }
+.card.risk-medium { border-left-color: var(--warning); }
+.card.busy { opacity: .5; }
+.card-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tool { font-family: var(--mono); font-weight: 650; font-size: 15px; }
+.badge { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.age { margin-left: auto; color: var(--muted); font-size: 13px; }
+.summary { margin: 4px 0 10px; }
+.params { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 16px; margin: 0 0 10px; padding: 8px 12px; background: var(--well); border-radius: 8px; font-family: var(--mono); font-size: 13px; }
+.params dt { color: var(--ink-2); }
+.params dd { margin: 0; overflow-wrap: anywhere; }
+.claim { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.claim-label { font-weight: 600; color: var(--ink); }
+.claim-text { font-style: italic; }
+.tag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; }
+.why { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
+.why summary { cursor: pointer; width: max-content; }
+.why ul { margin: 8px 0 0; padding-left: 18px; font-family: var(--mono); font-size: 12.5px; }
+.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.note-input { flex: 1 1 240px; min-width: 0; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--page); }
+.btn { padding: 7px 18px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); font-weight: 600; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn.small { padding: 5px 12px; font-size: 14px; white-space: nowrap; }
+.btn:disabled { cursor: default; }
+.btn:focus-visible, .note-input:focus-visible, .why summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-2); padding: 10px 14px; border-bottom: 1px solid var(--line); }
+td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.when { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+td.tool { font-size: 13.5px; white-space: nowrap; }
+td.risk { white-space: nowrap; }
+.what b { font-weight: 600; }
+.what .detail { display: block; color: var(--ink-2); font-size: 13px; }
+
+.risk-critical .glyph, .glyph.risk-critical, .glyph.bad { color: var(--critical); }
+.glyph.risk-high { color: var(--serious); }
+.glyph.risk-medium { color: var(--warning); }
+.glyph.risk-low, .glyph.quiet { color: var(--muted); }
+.glyph.ok { color: var(--good); }
+.glyph.asked { color: var(--accent); }
+
+footer { max-width: 1080px; margin: 0 auto; padding: 0 24px 32px; color: var(--muted); font-size: 13px; }
+.auth { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--page); padding: 10px 16px; border-radius: 8px; font-size: 14px; }
+
+@media (max-width: 760px) {
+  .top { padding: 12px 16px; }
+  main { padding: 16px; }
+  footer { padding: 0 16px 24px; }
+  .tiles { grid-template-columns: minmax(0, 1fr); }
+  .actions .btn { flex: 1; }
+  .brand .sub { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true"></span>Oversight <span class="sub">Review</span></div>
+  <div class="presence">
+    <span class="pill"><span id="presence-dot" class="dot"></span><span id="presence-text">Available</span></span>
+    <button id="presence-btn" class="btn small" type="button">Step away</button>
+  </div>
+</header>
+
+<main>
+  <div id="auth" class="banner" hidden>
+    <p><b>This service needs its access token.</b> It is the value of OVERSIGHT_TOKEN where the service runs.</p>
+    <div class="auth">
+      <input id="token" class="note-input" type="password" autocomplete="off" aria-label="Access token" placeholder="Access token">
+      <button id="token-btn" class="btn primary" type="button">Unlock</button>
+    </div>
+  </div>
+  <p id="away" class="banner" hidden><b>You are away.</b> Risky actions are held in your queue until you are back. Low and medium risk work keeps running.</p>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="label" id="budget-label">Questions this hour</div>
+      <div class="value"><span id="asked">0</span><span class="of"> of <span id="limit">0</span></span></div>
+      <div id="meter" class="meter" role="img"></div>
+      <div class="note" id="budget-note"></div>
+    </div>
+    <div class="tile">
+      <div class="label">Waiting for you</div>
+      <div class="value" id="waiting">0</div>
+      <div class="note" id="waiting-note"></div>
+    </div>
+    <div class="tile">
+      <div class="label">Next question can come</div>
+      <div class="value" id="next">Now</div>
+      <div class="note" id="next-note"></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Needs your decision <span class="count" id="ask-count">0</span></h2>
+    <p class="hint">The agent is waiting on these. Critical ones always come to you; high risk ones only while you have questions left.</p>
+    <div id="ask-list" class="list"></div>
+    <p id="ask-empty" class="empty">Nothing needs you right now.</p>
+  </section>
+
+  <section>
+    <h2>Queued for later <span class="count" id="later-count">0</span></h2>
+    <p class="hint">Held while you were away or had just been asked. Review them in one sitting.</p>
+    <div id="later-list" class="list"></div>
+    <p id="later-empty" class="empty">Nothing is queued.</p>
+  </section>
+
+  <section>
+    <h2>Recent decisions</h2>
+    <p class="hint">Everything the agent tried, and who decided. The full record is in the audit log.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>When</th><th>Action</th><th>Risk</th><th>What happened</th></tr></thead>
+        <tbody id="recent"></tbody>
+      </table>
+    </div>
+    <p id="recent-empty" class="empty" hidden>No decisions yet.</p>
+  </section>
+</main>
+<footer>Rules <code id="rules"></code> · <span id="conn">updates every 2 seconds</span></footer>
+
+<script nonce="__NONCE__">
+"use strict";
+const $ = (s) => document.querySelector(s);
+const RANK = { critical: 3, high: 2, medium: 1, low: 0 };
+const RISK = { critical: ["▲", "Critical"], high: ["◆", "High"], medium: ["●", "Medium"], low: ["○", "Low"] };
+const EVENT = {
+  ran: ["○", "quiet", "Ran on its own"],
+  checked: ["✓", "ok", "Checker allowed"],
+  blocked: ["✕", "bad", "Blocked"],
+  asked: ["◆", "asked", "Asked you"],
+  queued: ["◷", "quiet", "Queued"],
+  approved: ["✓", "ok", "You approved"],
+  rejected: ["✕", "bad", "You rejected"],
+};
+const cards = new Map();
+let token = "";
+let available = true;
+try { token = sessionStorage.getItem("oversight-token") || ""; } catch (e) { /* storage blocked: ask again next time */ }
+
+function h(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined && text !== null) e.textContent = text;  // agent supplied text is always text, never markup
+  return e;
+}
+
+async function api(method, path, body) {
+  const headers = {};
+  if (token) headers.Authorization = "Bearer " + token;
+  if (body) headers["Content-Type"] = "application/json";
+  const r = await fetch(path, { method, headers, cache: "no-store", body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401) $("#auth").hidden = false;
+  if (!r.ok) { const err = new Error(data.error || r.statusText); err.status = r.status; throw err; }
+  return data;
+}
+
+function ago(now, t) {
+  const s = Math.max(0, now - t);
+  if (s < 45) return "just now";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  return Math.floor(s / 3600) + " h ago";
+}
+
+function wait(seconds) {
+  if (seconds < 60) return "In " + Math.ceil(seconds) + " s";
+  return "In " + Math.ceil(seconds / 60) + " min";
+}
+
+function fmt(v) {
+  const s = typeof v === "string" ? v : JSON.stringify(v);
+  return s.length > 400 ? s.slice(0, 400) + "…" : s;
+}
+
+function glyph(symbol, cls) { const g = h("span", "glyph " + cls, symbol); g.setAttribute("aria-hidden", "true"); return g; }
+
+function riskBadge(risk) {
+  const [symbol, label] = RISK[risk] || ["○", risk];
+  const b = h("span", "badge");
+  b.append(glyph(symbol, "risk-" + risk), h("span", null, label));
+  return b;
+}
+
+function toast(text) {
+  const t = h("div", "toast", text);
+  t.setAttribute("role", "status");
+  document.body.append(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function card(item) {
+  const c = h("article", "card risk-" + item.risk);
+  c.dataset.id = item.call_id;
+  const head = h("div", "card-head");
+  const age = h("span", "age");
+  head.append(h("span", "tool", item.tool), riskBadge(item.risk), age);
+  c.append(head, h("p", "summary", item.summary));
+  const keys = Object.keys(item.params || {});
+  if (keys.length) {
+    const dl = h("dl", "params");
+    for (const k of keys) dl.append(h("dt", null, k), h("dd", null, fmt(item.params[k])));
+    c.append(dl);
+  }
+  if (item.description) {
+    const p = h("p", "claim");
+    p.append(h("span", "claim-label", "Agent's note"), h("span", "claim-text", item.description), h("span", "tag", "not verified"));
+    c.append(p);
+  }
+  const why = h("details", "why");
+  const ul = h("ul");
+  for (const r of item.reasons) ul.append(h("li", null, r));
+  why.append(h("summary", null, "Why this decision"), ul);
+  c.append(why);
+  const row = h("div", "actions");
+  const note = h("input", "note-input");
+  note.type = "text";
+  note.maxLength = 500;
+  note.placeholder = "Note for the audit log (optional)";
+  note.setAttribute("aria-label", "Note for the audit log about " + item.tool);
+  const no = h("button", "btn", "Reject");
+  const yes = h("button", "btn primary", "Approve");
+  no.type = yes.type = "button";
+  no.addEventListener("click", () => decide(item.call_id, false, note.value, c));
+  yes.addEventListener("click", () => decide(item.call_id, true, note.value, c));
+  row.append(note, no, yes);
+  c.append(row);
+  c._age = age;
+  c._at = item.asked_at;
+  return c;
+}
+
+async function decide(id, approved, note, node) {
+  node.classList.add("busy");
+  node.querySelectorAll("button").forEach((b) => { b.disabled = true; });
+  try {
+    await api("POST", "/answer", { call_id: id, approved, note });
+  } catch (e) {
+    if (e.status !== 404) {
+      toast("Could not save your answer: " + e.message);
+      node.classList.remove("busy");
+      node.querySelectorAll("button").forEach((b) => { b.disabled = false; });
+      return;
+    }
+    toast("Someone already answered this one.");
+  }
+  cards.delete(id);
+  node.remove();
+  refresh();
+}
+
+function sync(list, items, now) {
+  const want = new Set(items.map((i) => i.call_id));
+  for (const node of [...list.children]) {
+    if (!want.has(node.dataset.id)) { cards.delete(node.dataset.id); node.remove(); }
+  }
+  items.forEach((item, i) => {
+    let node = cards.get(item.call_id);
+    if (!node) { node = card(item); cards.set(item.call_id, node); }
+    if (list.children[i] !== node) list.insertBefore(node, list.children[i] || null);  // move only when needed, so typing is not interrupted
+    node._age.textContent = ago(now, node._at);
+  });
+}
+
+function byRisk(a, b) { return (RANK[b.risk] - RANK[a.risk]) || (a.asked_at - b.asked_at); }
+
+function render(data) {
+  const a = data.attention;
+  const now = a.now;
+  available = a.available;
+  $("#presence-dot").className = "dot" + (available ? "" : " away");
+  $("#presence-text").textContent = available ? "Available" : "Away";
+  $("#presence-btn").textContent = available ? "Step away" : "I'm back";
+  $("#away").hidden = available;
+
+  const period = a.window_seconds === 3600 ? "this hour" : "in the last " + Math.round(a.window_seconds / 60) + " min";
+  $("#budget-label").textContent = "Questions " + period;
+  $("#asked").textContent = a.asked;
+  $("#limit").textContent = a.limit;
+  const meter = $("#meter");
+  const segments = Math.min(a.limit, 12);
+  const filled = a.limit ? Math.round(Math.min(a.asked, a.limit) * segments / a.limit) : 0;
+  meter.replaceChildren(...Array.from({ length: segments }, (_, i) => h("span", "seg" + (i < filled ? " on" : ""))));
+  meter.classList.toggle("full", a.asked >= a.limit);
+  meter.setAttribute("aria-label", a.asked + " of " + a.limit + " questions used " + period);
+  const budgetNote = $("#budget-note");
+  if (a.asked >= a.limit) {
+    budgetNote.replaceChildren(glyph("▲", "risk-high"), document.createTextNode(" Used up. High risk actions are blocked by the checker or queued for you."));
+  } else {
+    budgetNote.textContent = (a.limit - a.asked) + " left before high risk actions start to queue.";
+  }
+
+  const ask = data.pending.filter((p) => p.outcome === "ask_human").sort(byRisk);
+  const later = data.pending.filter((p) => p.outcome !== "ask_human").sort(byRisk);
+  $("#waiting").textContent = data.pending.length;
+  const oldest = Math.min(...data.pending.map((p) => p.asked_at));
+  $("#waiting-note").textContent = data.pending.length ? "Oldest asked " + ago(now, oldest) : "You are all caught up.";
+
+  if (!available) {
+    $("#next").textContent = "When you're back";
+    $("#next-note").textContent = "Critical actions wait for you too.";
+  } else if (a.next_ask_at === null) {
+    $("#next").textContent = "Critical only";
+    $("#next-note").textContent = "High risk actions never interrupt you.";
+  } else {
+    const s = a.next_ask_at - now;
+    $("#next").textContent = s <= 0 ? "Now" : wait(s);
+    $("#next-note").textContent = "Critical actions can always ask.";
+  }
+
+  sync($("#ask-list"), ask, now);
+  sync($("#later-list"), later, now);
+  $("#ask-count").textContent = ask.length;
+  $("#later-count").textContent = later.length;
+  $("#ask-empty").hidden = ask.length > 0;
+  $("#later-empty").hidden = later.length > 0;
+
+  const rows = data.recent.map((r) => {
+    const [symbol, cls, label] = EVENT[r.event] || ["○", "quiet", r.event];
+    const tr = h("tr");
+    const what = h("td", "what");
+    what.append(glyph(symbol, cls), h("b", null, " " + label));
+    if (r.summary) what.append(h("span", "detail", r.summary));
+    const risk = h("td", "risk");
+    risk.append(riskBadge(r.risk));
+    tr.append(h("td", "when", ago(now, r.at)), h("td", "tool mono", r.tool), risk, what);
+    return tr;
+  });
+  $("#recent").replaceChildren(...rows);
+  $("#recent-empty").hidden = rows.length > 0;
+  $("#rules").textContent = data.rules;
+}
+
+async function refresh() {
+  try {
+    render(await api("GET", "/inbox"));
+    $("#conn").textContent = "updates every 2 seconds";
+  } catch (e) {
+    if (e.status !== 401) $("#conn").textContent = "cannot reach the service; retrying";
+  }
+}
+
+$("#presence-btn").addEventListener("click", async () => {
+  try { await api("POST", "/person", { available: !available }); } catch (e) { toast("Could not update: " + e.message); }
+  refresh();
+});
+
+$("#token-btn").addEventListener("click", () => {
+  token = $("#token").value.trim();
+  try { sessionStorage.setItem("oversight-token", token); } catch (e) { /* keep it for this tab only */ }
+  $("#auth").hidden = true;
+  refresh();
+});
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

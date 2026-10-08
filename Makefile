@@ -1,4 +1,4 @@
-.PHONY: check reproduce bench llm-estimate llm
+.PHONY: check reproduce bench screenshots llm-estimate llm
 
 # everything CI runs; stops at the first failure
 check:
@@ -15,6 +15,10 @@ reproduce:
 
 bench:
 	uv run python scripts/benchmark.py
+
+# the review page and terminal pictures in the README (needs node with playwright)
+screenshots:
+	uv run python scripts/screenshots.py
 
 # the same experiments with Claude as the checker (needs ANTHROPIC_API_KEY; spending stops at MAX_SPEND_USD)
 llm-estimate:

@@ -28,7 +28,7 @@ flowchart LR
 |---|---|---|---|
 | Library | `Oversight()` | threads in one process | one agent in one Python process |
 | Library with shared state | `Oversight(state=".oversight")` | processes on one machine | several agents or workers acting for the same person |
-| HTTP service | `oversight serve` | every client of the service | agents in other languages, or many machines |
+| HTTP service | `oversight serve` | every client of the service | agents in other languages, or many machines; includes a review page where the person approves, rejects and steps away |
 | MCP proxy | `oversight mcp -- <server>` | every call through that proxy | any MCP client (desktop apps, IDEs, agent frameworks) in front of any MCP server; people are asked through MCP elicitation |
 | Claude Code hook | `oversight hook` | every Claude Code tool call in a project | a coding agent on a developer's laptop |
 | Command line | `oversight check TOOL PARAMS` | nothing | shell scripts and CI jobs (exit code says what to do) |
@@ -87,7 +87,7 @@ A model based checker adds that model's latency, but only on medium risk actions
 
 ## Security
 
-The HTTP service binds to `127.0.0.1` unless told otherwise, accepts a bearer token (`OVERSIGHT_TOKEN`, compared in constant time), and rejects bodies over 1 MB. Audit logs and queues are redacted. The state files can be edited by anyone with access to the directory, so the Claude Code hook is a guardrail inside a trusted machine, not a sandbox. The threat model, including what is not defended, is in [threat_model.md](threat_model.md).
+The HTTP service binds to `127.0.0.1` unless told otherwise, accepts a bearer token (`OVERSIGHT_TOKEN`, compared in constant time), and rejects bodies over 1 MB. Without a token it answers only requests addressed to localhost and refuses requests sent from other web sites. The review page is served with a strict content security policy, cannot be framed, and inserts everything the agent sent as text only. Audit logs and queues are redacted. The state files can be edited by anyone with access to the directory, so the Claude Code hook is a guardrail inside a trusted machine, not a sandbox. The threat model, including what is not defended, is in [threat_model.md](threat_model.md).
 
 ## Scaling path
 
@@ -109,6 +109,6 @@ The HTTP service binds to `127.0.0.1` unless told otherwise, accepts a bearer to
 | `safety_model.py` | the LLM checker and the rules checker; the only place model calls start |
 | `adapters/` | provider SDK code (Anthropic today) |
 | `store.py` | where the attention state lives |
-| `server.py`, `cli.py`, `integrations/` | HTTP service, command line, MCP proxy, Claude Code hook |
+| `server.py`, `review.html`, `cli.py`, `integrations/` | HTTP service and its review page, command line, MCP proxy, Claude Code hook |
 | `redact.py`, `cache.py`, `spend.py`, `pricing.py` | secrets, model answer cache, spending cap |
 | `sim/` | synthetic actions, workdays, schedules, simulated person and checker, statistics |

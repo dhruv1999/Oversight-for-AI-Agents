@@ -7,7 +7,6 @@ A free, open source library that decides which of an AI agent's actions need a p
 * AI agents now take real actions. They pay invoices, email customers, change databases and run code.
 * The usual safeguard is a person who approves the risky ones.
 * Approvals wear people out. By the fiftieth request of the day, people approve without reading.
-* Hospitals have measured this for years. Clinicians override 49% to 96% of drug safety alerts ([van der Sijs et al.](https://pmc.ncbi.nlm.nih.gov/articles/PMC1447540)), and each extra reminder makes the next one less likely to be accepted ([Ancker et al.](https://pmc.ncbi.nlm.nih.gov/articles/PMC5387195/)).
 * So teams choose between asking about everything, which turns into rubber stamping, and asking about nothing, which is hoping for the best.
 
 ## Why I built this
@@ -19,12 +18,24 @@ I'm a product manager. I think about a reviewer's attention the way I think abou
 * I wanted to treat it as a budget. Spend it on the actions that matter, let an automatic checker cover the rest, and never let anything critical run without a person.
 * I wanted evidence rather than opinion, so the repository includes a simulation that compares this approach with the usual ones.
 
+## What it looks like
+
+The person who approves gets a review page. It shows how many questions they have left this hour, what is waiting for them, and an Approve and a Reject button for each. Everything else runs, or is checked automatically, without bothering them.
+
+![The review page: 4 of 6 questions used this hour, a critical database change and a $420 payment waiting for a decision](figures/review_page.png)
+
+Every action the agent tries is listed with who decided: it ran on its own, the checker allowed or blocked it, or the person answered.
+
+![Recent decisions: actions that ran on their own, one the checker blocked, ones queued while the person was away, and the person's approvals and rejections with their notes](figures/review_history.png)
+
+These are screenshots of the real page. A script plays a morning of agent actions through the service and photographs the result (`make screenshots`).
+
 ## Who it is for
 
 | Who | What they want | What they get |
 |---|---|---|
 | Product manager shipping an agent feature | an agent that does real work without users approving everything | risk rules anyone can read, and a clear answer to "how is risk handled?" |
-| The person who approves (finance lead, support manager, on call engineer) | fewer requests, and only the ones that matter | no more than 6 questions an hour by default, except for critical actions |
+| The person who approves (finance lead, support manager, on call engineer) | fewer requests, and only the ones that matter | one page to answer from, and no more than 6 questions an hour by default, except for critical actions |
 | Security and compliance | proof of what the agent did and why | a log of every decision with the reason, the rules in force, and secrets removed |
 | Developer or platform engineer | something that fits the agent they already have | a few lines of code in Python, over MCP or HTTP, or as a Claude Code hook |
 
@@ -91,7 +102,7 @@ print(check.explain())  # pay_invoice: ask_human (high risk), followed by the re
 |---|---|---|
 | Python (OpenAI Agents SDK, LangChain, plain functions) | add `@guard.protect` to each tool | [Python](docs/integrations.md#python) |
 | Any MCP client | run `oversight mcp -- <server command>` in place of the server | [MCP](docs/integrations.md#mcp) |
-| Any other language | run `oversight serve` and send `POST /check` | [HTTP](docs/integrations.md#http-for-any-language) |
+| Any other language | run `oversight serve` and send `POST /check`; people answer on its review page | [HTTP](docs/integrations.md#http-for-any-language) |
 | Claude Code | set `oversight hook` as a PreToolUse hook | [Claude Code](docs/integrations.md#claude-code) |
 | Shell scripts and CI | `oversight check` and branch on the exit code | [Command line](docs/integrations.md#command-line) |
 

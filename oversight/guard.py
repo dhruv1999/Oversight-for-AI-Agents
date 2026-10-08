@@ -69,6 +69,27 @@ class Check:
     def reason(self) -> str:
         return self.result.reason
 
+    @property
+    def summary(self) -> str:
+        """One plain sentence for people: what happens to this action and why."""
+        d, v = self.result.decision, self.result.verdict
+        if self.allowed:
+            return "Low risk, so it runs without review." if v is None else "The automatic checker reviewed it and found nothing wrong."
+        if self.blocked:
+            why = v.rationale.removeprefix("heuristic: ") if v else self.reason
+            return f"Stopped by the automatic checker: {why}."
+        risk = "Critical" if d.budget_exempt else f"{self.risk.capitalize()} risk"
+        if self.needs_person:
+            if d.budget_exempt:
+                return "Critical, so a person always decides."
+            if d.escalated:
+                return "The automatic checker was not sure, so a person decides."
+            return f"{risk}, and the reviewer has attention left this hour."
+        lead = "The automatic checker was not sure" if d.escalated and not d.degraded else risk
+        if any("unavailable" in r for r in d.reasons):
+            return f"{lead}, and the reviewer is away, so it waits for them."
+        return f"{lead}, and the reviewer was asked recently, so it waits in their queue."
+
     def explain(self) -> str:
         head = f"{self.action.tool}: {self.outcome.value} ({self.risk} risk)"
         return "\n".join([head, *(f"  {r}" for r in self.result.decision.reasons)])
@@ -123,10 +144,14 @@ class Oversight:
         self.rules_id = f"{self.policy.fingerprint}+{self.registry.fingerprint}"
         self._clock = clock
 
-    def _gate(self, state: dict[str, Any], now: float, checker: SafetyModel | None = None) -> tuple[OversightGate, AttentionTracker]:
+    def _tracker(self, state: dict[str, Any], now: float) -> AttentionTracker:
         att = AttentionTracker.from_config(self.policy.attention)
         att.restore(t for t in state["interrupt_times"] if now - t < att.window_seconds)
         att.set_available(state["available"])
+        return att
+
+    def _gate(self, state: dict[str, Any], now: float, checker: SafetyModel | None = None) -> tuple[OversightGate, AttentionTracker]:
+        att = self._tracker(state, now)
         gate = OversightGate.from_policy(self.policy, Allocator(self.policy, att), checker or self.safety_model, self.log)
         gate.rules_id = self.rules_id
         return gate, att
@@ -204,6 +229,24 @@ class Oversight:
     def is_person_available(self) -> bool:
         with self.store.transaction() as state:
             return bool(state["available"])
+
+    def attention(self, now: float | None = None) -> dict[str, Any]:
+        """How much of the person's attention is left right now, for dashboards and the review page.
+
+        next_ask_at is the earliest time a high risk action may interrupt them again (None if never).
+        Critical actions ignore the budget and only need the person to be available.
+        """
+        with self.store.transaction() as state:
+            t = self._clock() if now is None else now
+            att = self._tracker(state, t)
+            return {
+                "now": t,
+                "available": att.is_available(),
+                "asked": att.interrupts_in_window(t),
+                "limit": att.max_interrupts,
+                "window_seconds": att.window_seconds,
+                "next_ask_at": att.earliest_interrupt_time(t),
+            }
 
     def protect(
         self,
