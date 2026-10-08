@@ -9,6 +9,18 @@ instead of 12.8), and less harm got through (18.9% of harmful actions instead of
 ![Interruptions per day and harmful actions that got through, fixed approval rules vs this project](figures/hero.png)
 <!-- headline:end -->
 
+## Where it helps
+
+| Team | What the agent does | What changes |
+|---|---|---|
+| Finance | pays invoices, updates vendor records | nothing that moves money runs without a person |
+| Customer support | replies to customers | a message to every customer always needs a person |
+| Engineering | edits code, runs tests and commands | tests run freely; deleting files or running unknown scripts needs the developer |
+| Data and analytics | queries the company database | reading runs freely; deleting a table always waits for a person |
+| IT and operations | deploys software, grants access | at night, risky actions wait for morning instead of running unattended |
+
+Each of these is explained in plain terms in [docs/use_cases.md](docs/use_cases.md).
+
 ## Quickstart
 
 ```
@@ -76,6 +88,6 @@ It is not proof that this works in production. The workdays and the person are s
 
 ## More
 
-[Integrations](docs/integrations.md) · [Full results](docs/results.md) · [Research notes](docs/research.md) · [Product brief](docs/product_brief.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat_model.md) · [Risk levels](docs/risk_taxonomy.md) · [Contributing](CONTRIBUTING.md)
+[Use cases](docs/use_cases.md) · [Integrations](docs/integrations.md) · [Full results](docs/results.md) · [Research notes](docs/research.md) · [Product brief](docs/product_brief.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat_model.md) · [Risk levels](docs/risk_taxonomy.md) · [Contributing](CONTRIBUTING.md)
 
 MIT licensed.
