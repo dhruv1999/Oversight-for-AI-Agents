@@ -96,6 +96,8 @@ check = guard.check("pay_invoice", {"vendor": "Acme", "amount": 420})
 print(check.explain())  # pay_invoice: ask_human (high risk), followed by the reasons
 ```
 
+A small working app: [examples/invoice_assistant.py](examples/invoice_assistant.py) pays invoices and asks you in the terminal before anything risky.
+
 ## Use it with your agent
 
 | Your agent | How to connect | Details |
@@ -163,6 +165,6 @@ It is not proof that this works in production. The workdays and the person are s
 
 ## More
 
-[Use cases](docs/use_cases.md) · [Integrations](docs/integrations.md) · [Full results](docs/results.md) · [Research notes](docs/research.md) · [Product brief](docs/product_brief.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat_model.md) · [Risk levels](docs/risk_taxonomy.md) · [Contributing](CONTRIBUTING.md)
+[Example app](examples/invoice_assistant.py) · [Use cases](docs/use_cases.md) · [Integrations](docs/integrations.md) · [Full results](docs/results.md) · [Research notes](docs/research.md) · [Product brief](docs/product_brief.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat_model.md) · [Risk levels](docs/risk_taxonomy.md) · [Contributing](CONTRIBUTING.md)
 
 MIT licensed.

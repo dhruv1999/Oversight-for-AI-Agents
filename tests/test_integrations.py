@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace as NS
 
+import pytest
+
 from oversight.integrations.claude_code_hook import handle, to_registry_call
 from oversight.log import DecisionLog
 from oversight.policies import DEFAULT_POLICY
@@ -148,3 +150,12 @@ def test_readme_quickstart_runs():
     r = subprocess.run([sys.executable, str(ROOT / "examples" / "quickstart.py")], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     assert "run_sql: execute (low risk)" in r.stdout and "pay_invoice: ask_human (high risk)" in r.stdout and "run_sql: defer (critical risk)" in r.stdout
+
+
+@pytest.mark.parametrize("answers, paid", [("", []), ("y\ny\n", ["paid $420", "paid $18,500"])])
+def test_invoice_assistant_example(answers, paid):
+    r = subprocess.run([sys.executable, str(ROOT / "examples" / "invoice_assistant.py")], input=answers, capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+    assert "done: INV 2214" in r.stdout and "waiting: High risk, and the reviewer was asked recently" in r.stdout
+    assert [p for p in ("paid $420", "paid $18,500") if p in r.stdout] == paid
+    assert r.stdout.count("you said no") == (0 if paid else 2)
