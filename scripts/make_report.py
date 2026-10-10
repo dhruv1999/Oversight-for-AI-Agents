@@ -1,7 +1,7 @@
 """Render figures + docs/results.md from results/<tag>/summary.json, and refresh the README results block.
 
     uv run python scripts/make_report.py            # uses results/heuristic
-    uv run python scripts/make_report.py --tag llm_claude-opus-5-5
+    uv run python scripts/make_report.py --tag llm_anthropic_claude-opus-5-5
 
 Every number printed here is read from the JSON the experiment script wrote.
 """
@@ -451,7 +451,7 @@ An interval that does not include 0 means the difference is unlikely to be noise
   flags). No other tuning against these results.
 - **Fatigue drives the always-human result.** Compare the two tables before quoting it.
 - **Deferral is not free.** Adaptive trades interrupts for waiting; in the `away` profile queued actions wait hours.
-- Run `scripts/run_experiments.py --reviewer anthropic` to repeat everything with an LLM reviewer (costs money; capped by `MAX_SPEND_USD`).
+- Run `make llm` to repeat everything with an AI checker: Claude by default, or OpenAI, Azure OpenAI or Gemini with `PROVIDER=`, `MODEL=` and `PRICE=` (costs money; capped by `MAX_SPEND_USD`).
 """
 
 

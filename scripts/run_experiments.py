@@ -3,7 +3,9 @@
     uv run python scripts/run_experiments.py                      # heuristic reviewer, free, ~1-2 min
     uv run python scripts/run_experiments.py --quick              # smoke run
     uv run python scripts/run_experiments.py --reviewer anthropic --estimate   # print cost, spend nothing
-    MAX_SPEND_USD=5 uv run python scripts/run_experiments.py --reviewer anthropic
+    MAX_SPEND_USD=8 uv run python scripts/run_experiments.py --reviewer anthropic
+    MAX_SPEND_USD=8 uv run python scripts/run_experiments.py --reviewer gemini --model <model> --price 0.75,3.75
+    (openai and azure work the same way; on Azure, --model is the deployment name)
 
 Settings below were fixed before the comparative results were looked at.
 """
@@ -21,12 +23,13 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
+from oversight.adapters import DEFAULT_MODELS, PROVIDERS, make_client
 from oversight.cache import ResponseCache
 from oversight.policies import DEFAULT_POLICY, DEFAULT_TOOLS
 from oversight.policy import Policy
-from oversight.pricing import cost_usd
+from oversight.pricing import cost_usd, price_known
 from oversight.registry import ToolRegistry
-from oversight.safety_model import SYSTEM_PROMPT, VERDICT_SCHEMA, HeuristicSafetyModel, LLMSafetyModel, build_user_prompt
+from oversight.safety_model import SYSTEM_PROMPT, VERDICT_SCHEMA, HeuristicSafetyModel, LLMSafetyModel, build_user_prompt, parse_price
 from oversight.sim.availability import PROFILES, make_schedule
 from oversight.sim.episodes import sample_episode
 from oversight.sim.scenarios import build_pool
@@ -52,21 +55,26 @@ def git_commit() -> str:
         return "unknown"
 
 
+EFFORT_OPTION = {"anthropic": "effort", "openai": "reasoning_effort", "azure": "reasoning_effort", "gemini": "thinking_level"}
+
+
 def make_reviewer(args, pool, policy, registry):
     if args.reviewer == "heuristic":
         return HeuristicSafetyModel()
-    from oversight.adapters.anthropic_client import AnthropicClient
-
-    cache = ResponseCache(ROOT / "cache" / f"reviews_{args.model}.jsonl")
+    price = parse_price(args.price)
+    if price is None and not price_known(args.model):
+        sys.exit(f"[llm] no built in price for {args.model}; pass --price input,output (USD per million tokens)")
+    cache = ResponseCache(ROOT / "cache" / f"reviews_{args.reviewer}_{args.model}.jsonl")
     actions = [registry.to_action(p.key, p.tool, p.params, p.description) for p in pool]
-    client = AnthropicClient(model=args.model, effort=args.effort, json_schema=VERDICT_SCHEMA, client=None if not args.estimate else object())
+    options = {EFFORT_OPTION[args.reviewer]: args.effort}
+    client = make_client(args.reviewer, args.model, VERDICT_SCHEMA, price, client=object() if args.estimate else None, **options)
     model = LLMSafetyModel(client, cache=cache, min_allow_confidence=0.0)
     todo = [a for a in actions if not model.is_cached(a)]
     est_in = sum((len(SYSTEM_PROMPT) + len(build_user_prompt(a))) // 3 + 50 for a in todo)
-    print(f"[llm] {len(actions)} unique actions, {len(actions) - len(todo)} cached, {len(todo)} to review with {args.model}")
+    print(f"[llm] {len(actions)} unique actions, {len(actions) - len(todo)} cached, {len(todo)} to review with {args.reviewer} {args.model}")
     print(
-        f"[llm] estimated input ~{est_in:,} tok; cost ~${cost_usd(args.model, est_in, 600 * len(todo)):.2f} "
-        f"(assumes ~600 output tok each), worst case ${cost_usd(args.model, est_in, client.max_tokens * len(todo)):.2f}"
+        f"[llm] estimated input ~{est_in:,} tok; cost ~${cost_usd(args.model, est_in, 600 * len(todo), price):.2f} "
+        f"(assumes ~600 output tok each), worst case ${cost_usd(args.model, est_in, client.max_tokens * len(todo), price):.2f}"
     )
     if args.estimate:
         sys.exit(0)
@@ -125,16 +133,21 @@ def aggregate(eps: list[dict], rng: random.Random) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--reviewer", choices=["heuristic", "anthropic"], default="heuristic")
-    ap.add_argument("--model", default="claude-opus-5-5")
-    ap.add_argument("--effort", default="low")
+    ap.add_argument("--reviewer", choices=["heuristic", *PROVIDERS], default="heuristic")
+    ap.add_argument("--model", default=None, help="model to review with (on Azure, the deployment name); Claude Opus 5.5 by default")
+    ap.add_argument("--price", default=None, help="'input,output' USD per million tokens; needed for anything but Claude")
+    ap.add_argument("--effort", default="low", help="effort, reasoning effort or thinking level, depending on the provider")
     ap.add_argument("--estimate", action="store_true", help="print LLM cost estimate and exit")
     ap.add_argument("--quick", action="store_true", help="1 seed x 4 episodes smoke run")
     ap.add_argument("--out", default=None, help="results directory (default results/<reviewer>)")
     args = ap.parse_args()
+    if args.reviewer != "heuristic":
+        args.model = args.model or DEFAULT_MODELS.get(args.reviewer)
+        if not args.model:
+            ap.error(f"--model is required for --reviewer {args.reviewer}")
 
     seeds, n_eps = ([0], 4) if args.quick else (SEEDS, EPISODES_PER_SEED)
-    tag = args.reviewer if args.reviewer == "heuristic" else f"llm_{args.model}"
+    tag = args.reviewer if args.reviewer == "heuristic" else f"llm_{args.reviewer}_{args.model}"
     out = Path(args.out) if args.out else ROOT / "results" / (tag + ("_quick" if args.quick else ""))
     out.mkdir(parents=True, exist_ok=True)
 

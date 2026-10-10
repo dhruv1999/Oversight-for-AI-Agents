@@ -157,6 +157,29 @@ class Oversight:
         return gate, att
 
     @classmethod
+    def with_llm(
+        cls,
+        provider: str,
+        model: str | None = None,
+        max_spend_usd: float = 1.0,
+        state_dir: str | Path = ".oversight",
+        price_per_mtok: tuple[float, float] | None = None,
+        client: Any = None,
+        options: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> Oversight:
+        """Use an AI model as the checker: provider "anthropic", "openai", "azure" or "gemini".
+
+        Answers are cached in state_dir and spending stops at max_spend_usd. Only Claude prices are
+        built in; for other models pass price_per_mtok=(input, output) in USD per million tokens.
+        `options` go to the provider adapter (for example endpoint and api_version on Azure).
+        """
+        from .safety_model import build_llm_checker
+
+        checker = build_llm_checker(provider, model, state_dir, max_spend_usd, price_per_mtok, client, **(options or {}))
+        return cls(safety_model=checker, **kwargs)
+
+    @classmethod
     def with_claude(
         cls,
         model: str = "claude-opus-5-5",
@@ -166,18 +189,7 @@ class Oversight:
         **kwargs: Any,
     ) -> Oversight:
         """Use Claude as the checker. Answers are cached in state_dir; spending stops at max_spend_usd."""
-        from .adapters.anthropic_client import AnthropicClient
-        from .cache import ResponseCache
-        from .safety_model import VERDICT_SCHEMA, LLMSafetyModel
-        from .spend import SpendTracker
-
-        d = Path(state_dir)
-        checker = LLMSafetyModel(
-            AnthropicClient(model=model, json_schema=VERDICT_SCHEMA, client=client),
-            cache=ResponseCache(d / "review_cache.jsonl"),
-            spend=SpendTracker(max_spend_usd, ledger_path=d / "spend_ledger.jsonl"),
-        )
-        return cls(safety_model=checker, **kwargs)
+        return cls.with_llm("anthropic", model, max_spend_usd, state_dir, client=client, **kwargs)
 
     def check(self, tool: str, params: dict[str, Any] | None = None, description: str = "", call_id: str | None = None, now: float | None = None) -> Check:
         """Decide who must approve this tool call. Records the interrupt if a person is asked."""

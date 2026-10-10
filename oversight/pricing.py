@@ -1,4 +1,8 @@
-"""USD per million tokens (input, output). Anthropic first-party list prices, cached 2026-09-25."""
+"""USD per million tokens (input, output). Anthropic first-party list prices, cached 2026-09-25.
+
+Other providers' prices are not built in: they change often and, on Azure, depend on the contract.
+Pass them to the checker as price_per_mtok=(input, output); use (0, 0) for a model you host yourself.
+"""
 
 from __future__ import annotations
 
@@ -27,10 +31,18 @@ def normalise(model: str) -> str:
     return re.sub(r"-\d{8}$", "", model)
 
 
-def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
-    try:
-        pin, pout = PRICES_PER_MTOK[normalise(model)]
-    except KeyError as e:
-        # fail closed: we refuse to spend on a model whose price we cannot bound
-        raise UnknownModelPricing(model) from e
+def price_known(model: str) -> bool:
+    return normalise(model) in PRICES_PER_MTOK
+
+
+def cost_usd(model: str, input_tokens: int, output_tokens: int, price: tuple[float, float] | None = None) -> float:
+    """Cost of one call. `price` (USD per million input and output tokens) overrides the table."""
+    if price is not None:
+        pin, pout = price
+    else:
+        try:
+            pin, pout = PRICES_PER_MTOK[normalise(model)]
+        except KeyError as e:
+            # fail closed: we refuse to spend on a model whose price we cannot bound
+            raise UnknownModelPricing(model) from e
     return (input_tokens * pin + output_tokens * pout) / 1_000_000

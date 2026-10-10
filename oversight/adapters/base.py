@@ -16,6 +16,7 @@ class LLMResponse:
 class LLMClient(Protocol):
     model: str
     max_tokens: int
+    price_per_mtok: tuple[float, float] | None  # USD per million input and output tokens; None means the built in table
 
     @property
     def settings(self) -> dict[str, Any]: ...  # everything besides the prompt that shapes the answer
@@ -30,6 +31,7 @@ class ScriptedClient:
         self._script = list(script)
         self.model = model
         self.max_tokens = max_tokens
+        self.price_per_mtok: tuple[float, float] | None = None
         self.calls = 0
 
     @property

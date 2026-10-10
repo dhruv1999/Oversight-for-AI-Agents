@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 from typing import Any, Protocol
 
 from .adapters.base import LLMClient
@@ -107,6 +108,10 @@ class LLMSafetyModel:
         self.spend = spend
         self.min_allow_confidence = min_allow_confidence
 
+    @property
+    def _price(self) -> tuple[float, float] | None:
+        return getattr(self.client, "price_per_mtok", None)
+
     def _key(self, user: str) -> str:
         return make_key(self.client.model, SYSTEM_PROMPT, user, self.client.settings)
 
@@ -122,20 +127,22 @@ class LLMSafetyModel:
 
         if self.spend is not None:  # raises SpendLimitExceeded before any money is spent
             est_input = (len(SYSTEM_PROMPT) + len(user)) // 3 + 50
-            self.spend.check(self.client.model, est_input, self.client.max_tokens)
+            self.spend.check(self.client.model, est_input, self.client.max_tokens, self._price)
         try:
             r = self.client.complete(SYSTEM_PROMPT, user)
         except Exception as e:  # network, auth, 5xx... never cached, never allowed
             return _escalate(self.client.model, "safety model call failed", f"{type(e).__name__}: {e}")
 
         cost = 0.0
+        # with a price given, bill by it: Azure reports the underlying model, not the deployment name
+        billed = self.client.model if self._price else (r.model or self.client.model)
         if self.spend is not None:
-            cost = self.spend.record(r.model or self.client.model, r.input_tokens, r.output_tokens)
+            cost = self.spend.record(billed, r.input_tokens, r.output_tokens, self._price)
         else:
             from .pricing import UnknownModelPricing, cost_usd
 
             try:
-                cost = cost_usd(r.model or self.client.model, r.input_tokens, r.output_tokens)
+                cost = cost_usd(billed, r.input_tokens, r.output_tokens, self._price)
             except UnknownModelPricing:
                 cost = 0.0
         row = {
@@ -224,3 +231,60 @@ class HeuristicSafetyModel:
         if isinstance(amount, (int, float)) and amount >= self.large_payment_usd:
             return SafetyVerdict(Verdict.ESCALATE, 0.6, f"heuristic: large payment ${amount:,.0f}", self.name)
         return SafetyVerdict(Verdict.ALLOW, 0.7, "heuristic: no known-harm pattern matched", self.name)
+
+
+def build_llm_checker(
+    provider: str,
+    model: str | None = None,
+    state_dir: str | Path = ".oversight",
+    max_spend_usd: float = 1.0,
+    price_per_mtok: tuple[float, float] | None = None,
+    client: Any = None,
+    **options: Any,
+) -> LLMSafetyModel:
+    """An AI checker with its answers cached and its spending capped, both kept in state_dir.
+
+    provider is "anthropic", "openai", "azure" or "gemini". Only Claude prices are built in; for
+    anything else pass price_per_mtok=(input, output) in USD per million tokens, or (0, 0) for a
+    model you host yourself. Without a price the checker refuses to start rather than spend blind.
+    """
+    from .adapters import DEFAULT_MODELS, make_client
+    from .pricing import price_known
+
+    name = model or DEFAULT_MODELS.get(provider)
+    if name and price_per_mtok is None and not price_known(name):  # checked before any SDK looks for a key
+        raise ValueError(
+            f"no built in price for {name!r}: pass price_per_mtok=(input, output) in USD per million tokens "
+            "so the spending cap can work, or (0, 0) for a model you host yourself"
+        )
+    llm = make_client(provider, model, json_schema=VERDICT_SCHEMA, price_per_mtok=price_per_mtok, client=client, **options)
+    d = Path(state_dir)
+    return LLMSafetyModel(
+        llm,
+        cache=ResponseCache(d / "review_cache.jsonl"),
+        spend=SpendTracker(max_spend_usd, ledger_path=d / "spend_ledger.jsonl"),
+    )
+
+
+def parse_price(text: str | None) -> tuple[float, float] | None:
+    """'1.25,10' -> (1.25, 10.0): USD per million input and output tokens."""
+    if not text:
+        return None
+    try:
+        pin, pout = (float(x) for x in text.split(","))
+    except ValueError as e:
+        raise ValueError(f"price must be 'input,output' in USD per million tokens, got {text!r}") from e
+    return pin, pout
+
+
+def build_checker(
+    name: str | None,
+    model: str | None = None,
+    price: str | None = None,
+    state_dir: str | Path = ".oversight",
+    max_spend_usd: float = 1.0,
+) -> SafetyModel:
+    """The checker named on the command line or in the environment: "rules" (the default) or a provider."""
+    if not name or name in ("rules", "heuristic"):
+        return HeuristicSafetyModel()
+    return build_llm_checker(name, model, state_dir, max_spend_usd, parse_price(price))

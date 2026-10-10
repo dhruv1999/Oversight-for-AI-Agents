@@ -4,6 +4,7 @@
     oversight serve --port 8321 --state .oversight
     oversight hook                      # Claude Code PreToolUse hook (reads the event on stdin)
     oversight mcp -- <server command>   # put oversight in front of any MCP server
+    oversight --checker gemini --model <model> --price 0.75,3.75 serve   # an AI model as the checker
 
 `check` exits 0 when the action may run, 2 when blocked, 3 when a person must decide, 4 when it
 must wait for a person, so shell scripts and CI jobs can branch on it.
@@ -13,12 +14,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
+from .adapters import PROVIDERS
 from .gate import Outcome
 from .guard import Oversight
 from .policies import DEFAULT_POLICY, DEFAULT_TOOLS
+from .safety_model import build_checker
 
 EXIT = {Outcome.EXECUTE: 0, Outcome.BLOCK: 2, Outcome.ASK_HUMAN: 3, Outcome.DEFER: 4}
 
@@ -28,6 +32,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--policy", default=str(DEFAULT_POLICY))
     ap.add_argument("--tools", default=str(DEFAULT_TOOLS))
     ap.add_argument("--state", default=None, help="directory for a shared interrupt budget (default: this process only)")
+    ap.add_argument(
+        "--checker",
+        choices=["rules", *PROVIDERS],
+        default=os.environ.get("OVERSIGHT_REVIEWER") or "rules",
+        help="who reviews medium risk actions: the free rules checker (default) or an AI model",
+    )
+    ap.add_argument("--model", default=os.environ.get("OVERSIGHT_MODEL"), help="model for an AI checker (on Azure, the deployment name)")
+    ap.add_argument("--price", default=os.environ.get("OVERSIGHT_PRICE"), help="model price as 'input,output' USD per million tokens")
+    ap.add_argument("--max-spend", type=float, default=float(os.environ.get("MAX_SPEND_USD", "1.0")), help="stop spending at this many USD")
     sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("check", help="check one action and explain the decision")
     c.add_argument("tool")
@@ -47,7 +60,12 @@ def main(argv: list[str] | None = None) -> int:
         hook_main()
         return 0
 
-    guard = Oversight(policy=args.policy, tools=args.tools, state=Path(args.state) if args.state else None)
+    try:
+        checker = build_checker(args.checker, args.model, args.price, Path(args.state or ".oversight"), args.max_spend)
+    except Exception as e:  # missing price, model, SDK or key: say what is wrong instead of a traceback
+        print(f"could not set up the {args.checker} checker: {e}", file=sys.stderr)
+        return 64
+    guard = Oversight(policy=args.policy, tools=args.tools, state=Path(args.state) if args.state else None, safety_model=checker)
     if args.cmd == "mcp":
         command = [a for a in args.server if a != "--"]
         if not command:

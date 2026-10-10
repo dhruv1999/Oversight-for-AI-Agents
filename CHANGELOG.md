@@ -6,6 +6,7 @@
 - `GET /checks/<call_id>` so an agent can wait for the answer given on the page; `"review-page"` option in the TypeScript client.
 - `Check.summary`: one plain sentence saying what happens to an action and why. `Oversight.attention()`: questions used, limit and when the next one may come.
 - Screenshots in the README, taken from the real page by `scripts/screenshots.py`.
+- AI checkers for OpenAI, Azure OpenAI and Google Gemini next to Claude: `Oversight.with_llm(provider, ...)`, `--checker` on the command line, `OVERSIGHT_REVIEWER` for the Claude Code hook, and `make llm PROVIDER=...` for the evaluation. Prices are given per model so the spending cap works everywhere; each adapter is tested against its real SDK.
 
 ## 0.2.0
 

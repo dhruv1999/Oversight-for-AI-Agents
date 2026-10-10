@@ -55,7 +55,7 @@ All six go through the same `Oversight.check`, so the rules and the log format a
 
 **Secrets never reach disk.** Parameters are redacted (API keys, passwords, tokens, private keys, bearer headers, keys named like secrets) before anything is written to the audit log or the deferred queue. The checker still sees the full parameters, because it needs them to judge.
 
-**Standard library for the core.** The core depends only on PyYAML. The HTTP service is `http.server`. The Anthropic SDK is an optional extra. Nothing forces an agent framework on the user.
+**Standard library for the core.** The core depends only on PyYAML. The HTTP service is `http.server`. Provider SDKs (Anthropic, OpenAI for OpenAI and Azure, Google for Gemini) are optional extras. Nothing forces an agent framework on the user.
 
 ## Performance
 
@@ -107,7 +107,7 @@ The HTTP service binds to `127.0.0.1` unless told otherwise, accepts a bearer to
 | `allocator.py` | the router; `baselines.py` holds the routers it is compared against |
 | `gate.py` | routing, checker, fail closed handling and the audit record |
 | `safety_model.py` | the LLM checker and the rules checker; the only place model calls start |
-| `adapters/` | provider SDK code (Anthropic today) |
+| `adapters/` | provider SDK code: Anthropic, OpenAI, Azure OpenAI and Gemini, one small class each |
 | `store.py` | where the attention state lives |
 | `server.py`, `review.html`, `cli.py`, `integrations/` | HTTP service and its review page, command line, MCP proxy, Claude Code hook |
 | `redact.py`, `cache.py`, `spend.py`, `pricing.py` | secrets, model answer cache, spending cap |

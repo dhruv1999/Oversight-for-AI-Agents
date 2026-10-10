@@ -31,13 +31,13 @@ class SpendTracker:
     def remaining_usd(self) -> float:
         return self.max_usd - self.spent_usd
 
-    def check(self, model: str, est_input_tokens: int, max_output_tokens: int) -> None:
-        worst = cost_usd(model, est_input_tokens, max_output_tokens)
+    def check(self, model: str, est_input_tokens: int, max_output_tokens: int, price: tuple[float, float] | None = None) -> None:
+        worst = cost_usd(model, est_input_tokens, max_output_tokens, price)
         if self.spent_usd + worst > self.max_usd:
             raise SpendLimitExceeded(f"next call could cost ${worst:.4f}; spent ${self.spent_usd:.4f} of MAX_SPEND_USD=${self.max_usd:.2f}")
 
-    def record(self, model: str, input_tokens: int, output_tokens: int) -> float:
-        c = cost_usd(model, input_tokens, output_tokens)
+    def record(self, model: str, input_tokens: int, output_tokens: int, price: tuple[float, float] | None = None) -> float:
+        c = cost_usd(model, input_tokens, output_tokens, price)
         self.spent_usd += c
         if self.ledger_path:
             self.ledger_path.parent.mkdir(parents=True, exist_ok=True)

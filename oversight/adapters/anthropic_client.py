@@ -23,9 +23,11 @@ class AnthropicClient:
         effort: str = "low",
         json_schema: dict[str, Any] | None = None,
         fallbacks: bool = True,
+        price_per_mtok: tuple[float, float] | None = None,
         client: Any = None,
     ):
         self.model = model
+        self.price_per_mtok = price_per_mtok
         self.max_tokens = max_tokens
         self.effort = effort
         self.json_schema = json_schema

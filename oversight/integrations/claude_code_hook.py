@@ -13,6 +13,8 @@ Modes (env OVERSIGHT_MODE):
                       permission flow ("defer"); the hook only adds "deny" and "ask".
   enforce             routine calls and safety-model approvals are allowed without a prompt.
 
+Checker (env OVERSIGHT_REVIEWER): rules (default), anthropic, openai, azure or gemini; see _reviewer.
+
 Fails safe: any internal error produces "ask", never "allow".
 State (attention budget, audit log, deferred queue) lives in $OVERSIGHT_STATE_DIR (default .oversight/).
 """
@@ -29,7 +31,7 @@ from typing import Any
 from ..guard import Oversight
 from ..policies import DEFAULT_POLICY, DEFAULT_TOOLS
 from ..redact import redact
-from ..safety_model import HeuristicSafetyModel, SafetyModel
+from ..safety_model import SafetyModel, build_checker
 
 
 def to_registry_call(tool_name: str, tool_input: dict[str, Any]) -> tuple[str, dict[str, Any], str]:
@@ -50,17 +52,15 @@ def to_registry_call(tool_name: str, tool_input: dict[str, Any]) -> tuple[str, d
 
 
 def _reviewer(state_dir: Path) -> SafetyModel:
-    if os.environ.get("OVERSIGHT_REVIEWER") != "anthropic":
-        return HeuristicSafetyModel()
-    from ..adapters.anthropic_client import AnthropicClient
-    from ..cache import ResponseCache
-    from ..safety_model import VERDICT_SCHEMA, LLMSafetyModel
-    from ..spend import SpendTracker
-
-    return LLMSafetyModel(
-        AnthropicClient(model=os.environ.get("OVERSIGHT_MODEL", "claude-opus-5-5"), json_schema=VERDICT_SCHEMA),
-        cache=ResponseCache(state_dir / "review_cache.jsonl"),
-        spend=SpendTracker.from_env(default=1.0, ledger_path=state_dir / "spend_ledger.jsonl"),
+    """OVERSIGHT_REVIEWER picks the checker: rules (default), anthropic, openai, azure or gemini.
+    OVERSIGHT_MODEL names the model, OVERSIGHT_PRICE gives its price as 'input,output' per million
+    tokens (needed for anything but Claude), and MAX_SPEND_USD caps spending."""
+    return build_checker(
+        os.environ.get("OVERSIGHT_REVIEWER"),
+        os.environ.get("OVERSIGHT_MODEL"),
+        os.environ.get("OVERSIGHT_PRICE"),
+        state_dir,
+        float(os.environ.get("MAX_SPEND_USD", "1.0")),
     )
 
 

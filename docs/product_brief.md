@@ -48,7 +48,7 @@ Agent frameworks are shipping tool use and human approval as built in features, 
 
 ## What comes next
 
-1. Run the full evaluation with an LLM checker (built and costed; needs an API key and about $4).
+1. Run the full evaluation with AI checkers from Anthropic, OpenAI, Azure and Google, and compare them on catch rate, false alarms and cost (all four are built; Claude is costed at about $4; needs API keys).
 2. Pilot with one team's real approval logs to measure actual interruption and override rates.
 3. Learn risk scores from those logs instead of hand setting them.
 4. Support on call rotations: several reviewers, one shared budget each.

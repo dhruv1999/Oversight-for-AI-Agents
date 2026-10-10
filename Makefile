@@ -20,10 +20,17 @@ bench:
 screenshots:
 	uv run python scripts/screenshots.py
 
-# the same experiments with Claude as the checker (needs ANTHROPIC_API_KEY; spending stops at MAX_SPEND_USD)
+# the same experiments with an AI model as the checker; spending stops at MAX_SPEND_USD
+#   make llm                                                     Claude (needs ANTHROPIC_API_KEY)
+#   make llm PROVIDER=gemini MODEL=<model> PRICE=0.75,3.75       also openai and azure (MODEL = deployment)
+PROVIDER ?= anthropic
+MODEL ?= claude-opus-5-5
+PRICE ?=
+LLM_ARGS = --reviewer $(PROVIDER) --model $(MODEL) $(if $(PRICE),--price $(PRICE))
+
 llm-estimate:
-	uv run python scripts/run_experiments.py --reviewer anthropic --estimate
+	uv run python scripts/run_experiments.py $(LLM_ARGS) --estimate
 
 llm:
-	uv run python scripts/run_experiments.py --reviewer anthropic
-	uv run python scripts/make_report.py --tag llm_claude-opus-5-5
+	uv run python scripts/run_experiments.py $(LLM_ARGS)
+	uv run python scripts/make_report.py --tag llm_$(PROVIDER)_$(MODEL)

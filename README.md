@@ -56,7 +56,7 @@ Most paid tools in this space screen what goes into and out of a model, or contr
 Where this project fits:
 
 * It answers the question these tools leave to you: can this person still give a good approval right now? None of the tools above that I looked at keeps track of how often the reviewer has already been asked.
-* It is free under the MIT license and runs on your own machines. Nothing leaves them unless you turn on the Claude checker.
+* It is free under the MIT license and runs on your own machines. Nothing leaves them unless you turn on an AI checker.
 * It works alongside them. A content filter can screen what the model reads, while Oversight decides which actions a person sees.
 
 *Based on public product pages and listings as of October 2026. Prices change, so check with each vendor.*
@@ -106,6 +106,20 @@ print(check.explain())  # pay_invoice: ask_human (high risk), followed by the re
 | Claude Code | set `oversight hook` as a PreToolUse hook | [Claude Code](docs/integrations.md#claude-code) |
 | Shell scripts and CI | `oversight check` and branch on the exit code | [Command line](docs/integrations.md#command-line) |
 
+## Choose the checker
+
+Medium risk actions, and high risk ones when the reviewer is out of attention, go to an automatic checker. Use the free rules checker, or a model from the provider you already pay for:
+
+| Checker | Turn it on in Python | On the command line |
+|---|---|---|
+| Free rules checker | nothing to do, it is the default | nothing to do |
+| Anthropic Claude | `Oversight.with_llm("anthropic")` | `--checker anthropic` |
+| OpenAI | `Oversight.with_llm("openai", model=..., price_per_mtok=...)` | `--checker openai --model ... --price ...` |
+| Azure OpenAI | `Oversight.with_llm("azure", model="your deployment", price_per_mtok=...)` | `--checker azure --model ... --price ...` |
+| Google Gemini | `Oversight.with_llm("gemini", model=..., price_per_mtok=...)` | `--checker gemini --model ... --price ...` |
+
+Every AI checker caches its answers, stops spending at a cap you set, and sends the action to a person if anything goes wrong. Only Claude's prices are built in; for other models you give the price per million tokens, so the cap works. Details are in [Choosing the checker](docs/integrations.md#choosing-the-checker).
+
 ## How it decides
 
 Every action gets a risk level from what it would actually do: what kind of action it is, whether it can be undone, how far the damage could spread, and how sensitive the data is. The agent's own explanation is ignored for scoring, because an agent that is wrong or has been tricked will explain itself convincingly.
@@ -113,7 +127,7 @@ Every action gets a risk level from what it would actually do: what kind of acti
 | Risk | Example | Who decides |
 |---|---|---|
 | Low | read a report, count yesterday's orders | nobody, it runs |
-| Medium | email a colleague, run the tests | an automatic checker (rules, or a model like Claude) |
+| Medium | email a colleague, run the tests | an automatic checker (free rules, or a model from Anthropic, OpenAI, Azure or Google) |
 | High | pay an invoice, update a customer record | a person, while they still have attention to spare |
 | Critical | drop a production table, send a secret outside the company | always a person; if nobody is around, it waits |
 
@@ -145,7 +159,7 @@ The design decisions, failure modes and scaling path are written up in [docs/arc
 
 ## What this is not
 
-It is not proof that this works in production. The workdays and the person are simulated, and I wrote both the scenarios and the rules checker, so treat the numbers as a comparison between approaches rather than a forecast. The rules checker catches less than half of the harmful actions in the test set; a model based checker is built in and costed (about $4 to rerun everything with Claude), but not yet evaluated. And anything the risk rules score as low is never reviewed, which is why the rules for your own tools matter more than anything else in this repository.
+It is not proof that this works in production. The workdays and the person are simulated, and I wrote both the scenarios and the rules checker, so treat the numbers as a comparison between approaches rather than a forecast. The rules checker catches less than half of the harmful actions in the test set; AI checkers for Claude, OpenAI, Azure OpenAI and Gemini are built in, and rerunning everything with Claude would cost about $4, but none has been evaluated yet. And anything the risk rules score as low is never reviewed, which is why the rules for your own tools matter more than anything else in this repository.
 
 ## More
 

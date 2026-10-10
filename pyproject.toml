@@ -15,6 +15,12 @@ anthropic = [
 mcp = [
     "mcp>=2.2",
 ]
+openai = [
+    "openai>=3.28",
+]
+gemini = [
+    "google-genai>=2.29",
+]
 
 [dependency-groups]
 dev = [

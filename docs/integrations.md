@@ -80,6 +80,47 @@ Claude Code's permission prompt becomes the person, and the budget decides how o
 
 The hook never approves anything by itself. It can only add a question or a block on top of what Claude Code already does. Decisions are logged in `.oversight/` in your project, with secrets removed.
 
+## Choosing the checker
+
+Medium risk actions, and high risk ones when the person is out of attention, go to an automatic checker. The free rules checker is the default. Any of these models can take its place, with the same instructions, the same answer format and the same safety rules:
+
+| Provider | Install | Key and settings it reads |
+|---|---|---|
+| Anthropic | `[anthropic]` | `ANTHROPIC_API_KEY`; Claude Opus 5.5 unless you name another model |
+| OpenAI | `[openai]` | `OPENAI_API_KEY`; `base_url` points it at any other server that speaks the OpenAI API |
+| Azure OpenAI | `[openai]` | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` and `OPENAI_API_VERSION`; the model is your deployment name |
+| Google Gemini | `[gemini]` | `GEMINI_API_KEY`; for Vertex AI, pass your own `genai.Client(vertexai=True, ...)` as `client` |
+
+```
+pip install "oversight-for-ai-agents[openai] @ git+https://github.com/dhruv1999/Oversight-for-AI-Agents"
+```
+
+```python
+from oversight import Oversight
+
+guard = Oversight.with_llm("anthropic")  # Claude Opus 5.5, prices built in
+guard = Oversight.with_llm("openai", model="<model>", price_per_mtok=(input_price, output_price))
+guard = Oversight.with_llm(
+    "azure",
+    model="<deployment>",
+    price_per_mtok=(input_price, output_price),
+    options={"endpoint": "https://<resource>.openai.azure.com", "api_version": "<version>"},
+)
+guard = Oversight.with_llm("gemini", model="<model>", price_per_mtok=(input_price, output_price), max_spend_usd=5)
+```
+
+The command line, the HTTP service and the MCP proxy take the same choice: `oversight --checker gemini --model <model> --price <input>,<output> serve`. The Claude Code hook reads it from `OVERSIGHT_REVIEWER`, `OVERSIGHT_MODEL` and `OVERSIGHT_PRICE`.
+
+What every AI checker does:
+
+* **Prices you give.** Only Claude's prices are built in, because other providers change theirs often and Azure prices depend on your contract. Give the price in USD per million input and output tokens, or `(0, 0)` for a model you host yourself. Without a price the checker will not start.
+* **A spending cap.** `max_spend_usd` (or `MAX_SPEND_USD`, $1 by default) is checked before every call. Thinking tokens count as output, because providers bill them that way.
+* **A cache.** Each distinct action is reviewed once; repeats cost nothing. Answers live in `.oversight/review_cache.jsonl`.
+* **Fail closed.** A refusal, a content filter, an error, an unreadable answer or a reached cap sends the action to a person. It never lets it through.
+* **Low effort by default.** Claude's `effort`, OpenAI's `reasoning_effort` and Gemini's `thinking_level` start at `low`; change them through `options`, or set them to `None` for models that do not support them.
+
+Each adapter is tested against its provider's official SDK with a local stand in server, which checks the exact request the provider would receive. None has been run against a live service from this repository yet, and none has been evaluated on the test set.
+
 ## Command line
 
 ```

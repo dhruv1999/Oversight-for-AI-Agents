@@ -207,4 +207,4 @@ Pacing was a small improvement on both measures, with confidence intervals below
   flags). No other tuning against these results.
 - **Fatigue drives the always-human result.** Compare the two tables before quoting it.
 - **Deferral is not free.** Adaptive trades interrupts for waiting; in the `away` profile queued actions wait hours.
-- Run `scripts/run_experiments.py --reviewer anthropic` to repeat everything with an LLM reviewer (costs money; capped by `MAX_SPEND_USD`).
+- Run `make llm` to repeat everything with an AI checker: Claude by default, or OpenAI, Azure OpenAI or Gemini with `PROVIDER=`, `MODEL=` and `PRICE=` (costs money; capped by `MAX_SPEND_USD`).

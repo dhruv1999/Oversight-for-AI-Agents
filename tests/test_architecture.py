@@ -22,7 +22,7 @@ def test_provider_sdks_only_imported_inside_adapters():
     for f in ROOT.rglob("*.py"):
         if "adapters" in f.parts:
             continue
-        assert "anthropic" not in top_level_imports(f), f
+        assert not ({"anthropic", "openai", "google"} & top_level_imports(f)), f
 
 
 def test_deterministic_core_never_imports_models_or_adapters():
