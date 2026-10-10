@@ -54,6 +54,7 @@ ignore = ["E731", "UP042"]  # str-mixin enums serialize cleanly to JSON
 "scripts/make_report.py" = ["E501"]  # markdown table rows
 
 [tool.mypy]
-python_version = "3.11"
+# no python_version: each CI job checks against its own Python (3.11 to 3.13), which keeps 3.11 covered
+# and lets mypy read dependency stubs written for newer versions (numpy, via the OpenAI SDK)
 packages = ["oversight"]
 warn_unused_ignores = true
