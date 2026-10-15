@@ -31,12 +31,14 @@ Each action gets a risk level from what it would actually do, not from what the 
 
 When the person is busy or away, high risk actions go to the checker, which can block them but never approve them, so the rest wait in a queue. Every decision is logged with its reasons.
 
-| Team | What changes |
-|---|---|
-| Finance | nothing that moves money runs without a person |
-| Customer support | a message to every customer always needs a person |
-| Engineering | tests run freely; deleting files or running unknown scripts needs the developer |
-| IT and operations | at night, risky actions wait for morning instead of running unattended |
+| Team | Agents in products like | What changes |
+|---|---|---|
+| Finance | Ramp, Brex, Bill.com | nothing that moves money runs without a person |
+| Customer support | Zendesk, Intercom | a message to every customer always needs a person |
+| Engineering | GitHub Copilot, Cursor, Claude Code | tests run freely; deleting files or running unknown scripts needs the developer |
+| IT and operations | ServiceNow, Okta | at night, risky actions wait for morning instead of running unattended |
+
+*The company names show the kind of product this is built for. None of them uses or endorses this project.*
 
 ## Quickstart
 
