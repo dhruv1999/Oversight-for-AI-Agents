@@ -18,6 +18,22 @@ pip install git+https://github.com/dhruv1999/Oversight-for-AI-Agents
 * The usual safeguard is a person who approves the risky ones.
 * By the fiftieth request of the day, people approve without reading. Oversight treats that person's attention as a budget and spends it only where it changes the outcome.
 
+## What it does
+
+* **Asks a person only when it matters,** and only as often as they can handle *(attention budget)*.
+* **Lets routine actions run on their own,** with an automatic checker on anything in between *(risk tiers, rules or AI checker)*.
+* **Never lets large or risky actions through without a person.** If nobody is around, they wait *(critical tier, approval queue)*.
+* **Keeps a record of every decision,** with who decided and why *(audit log)*.
+
+| Team | Agents in products like | What changes |
+|---|---|---|
+| Finance | Ramp, Brex, Bill.com | nothing that moves money runs without a person |
+| Customer support | Zendesk, Intercom | a message to every customer always needs a person |
+| Engineering | GitHub Copilot, Cursor, Claude Code | tests run freely; deleting files or running unknown scripts needs the developer |
+| IT and operations | ServiceNow, Okta | at night, risky actions wait for morning instead of running unattended |
+
+*The company names show the kind of product this is built for. None of them uses or endorses this project.*
+
 ## How it decides
 
 Each action gets a risk level from what it would actually do, not from what the agent says about it.
@@ -30,15 +46,6 @@ Each action gets a risk level from what it would actually do, not from what the 
 | Critical | pay $10,000 or more, send a secret outside the company | always a person; if nobody is around, it waits |
 
 When the person is busy or away, high risk actions go to the checker, which can block them but never approve them, so the rest wait in a queue. Every decision is logged with its reasons.
-
-| Team | Agents in products like | What changes |
-|---|---|---|
-| Finance | Ramp, Brex, Bill.com | nothing that moves money runs without a person |
-| Customer support | Zendesk, Intercom | a message to every customer always needs a person |
-| Engineering | GitHub Copilot, Cursor, Claude Code | tests run freely; deleting files or running unknown scripts needs the developer |
-| IT and operations | ServiceNow, Okta | at night, risky actions wait for morning instead of running unattended |
-
-*The company names show the kind of product this is built for. None of them uses or endorses this project.*
 
 ## Quickstart
 
