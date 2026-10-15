@@ -207,4 +207,11 @@ Pacing was a small improvement on both measures, with confidence intervals below
   flags). No other tuning against these results.
 - **Fatigue drives the always-human result.** Compare the two tables before quoting it.
 - **Deferral is not free.** Adaptive trades interrupts for waiting; in the `away` profile queued actions wait hours.
+- **Not proof that it works in production.** The authors wrote both the scenarios and the rules checker, so treat the numbers as a
+  comparison between approaches rather than a forecast.
+- **The rules checker catches less than half of the harmful actions** in the test set. AI checkers for Claude, OpenAI, Azure OpenAI
+  and Gemini are built in (rerunning everything with Claude would cost about $4), but none has been evaluated yet.
+- **Anything the risk rules score as low is never reviewed,** which is why the rules for your own tools matter more than anything else.
+- **Several agents sharing one person's budget** is a design property: tests check the budget cannot be spent twice, but the
+  simulation does not evaluate it.
 - Run `make llm` to repeat everything with an AI checker: Claude by default, or OpenAI, Azure OpenAI or Gemini with `PROVIDER=`, `MODEL=` and `PRICE=` (costs money; capped by `MAX_SPEND_USD`).

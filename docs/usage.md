@@ -1,6 +1,16 @@
-# Integrations
+# Usage
 
-Every integration goes through the same `Oversight.check`, so the rules, the interruption budget and the audit log behave the same way everywhere.
+Every way in goes through the same `Oversight.check`, so the rules, the interruption budget and the audit log behave the same way everywhere.
+
+| Your agent | How to connect | Details |
+|---|---|---|
+| Python (OpenAI Agents SDK, LangChain, plain functions) | add `@guard.protect` to each tool | [Python](#python) |
+| Any MCP client | run `oversight mcp -- <server command>` in place of the server | [MCP](#mcp) |
+| Any other language | run `oversight serve` and send `POST /check`; people answer on its review page | [HTTP](#http-for-any-language) |
+| Claude Code | set `oversight hook` as a PreToolUse hook | [Claude Code](#claude-code) |
+| Shell scripts and CI | `oversight check` and branch on the exit code | [Command line](#command-line) |
+
+The automatic checker can be the free rules checker or a model from Anthropic, OpenAI, Azure OpenAI or Google Gemini; see [Choosing the checker](#choosing-the-checker).
 
 ```
 pip install git+https://github.com/dhruv1999/Oversight-for-AI-Agents
@@ -64,7 +74,11 @@ curl -s localhost:8321/check -d '{"tool": "pay_invoice", "params": {"vendor": "A
 
 Open the address it prints in a browser to get the review page. The person sees how many questions they have left this hour, approves or rejects what is waiting (with an optional note for the audit log), and marks themselves away or back. Actions that were queued while they were away wait there too.
 
-![The review page: questions left this hour, actions waiting for a decision, and approve or reject buttons](../figures/review_page.png)
+![The review page: questions left this hour, a $12,800 and a $420 invoice payment waiting for a decision](../figures/review_page.png)
+
+The page also lists everything the agent tried and who decided: it ran on its own, the checker allowed or blocked it, it was queued, or the person answered.
+
+![Recent decisions: invoice lookups that ran on their own, a mass delete the checker blocked, payments approved and rejected with notes, and actions queued while the reviewer was away](../figures/review_history.png)
 
 An agent that wants the person to decide on that page polls `GET /checks/<call_id>` until it says `approved` or `rejected`. The TypeScript client does this for you: pass `"review-page"` as the third argument to `guarded`. Agents that ask people some other way, in Slack for example, record the answer with `POST /answer` instead. `POST /person` marks the person away or back, and `GET /inbox` returns everything the page shows.
 
@@ -129,4 +143,4 @@ oversight check run_sql '{"query": "DROP TABLE orders"}'
 
 This prints the decision and its reasons, then exits with 0 when the action may run, 2 when it is blocked, 3 when a person must decide, and 4 when it has to wait. Shell scripts and CI jobs can branch on that.
 
-![Output of oversight check for a read only query, which runs, and an $18,500 payment, which needs a person](../figures/terminal.png)
+![Output of oversight check for reading an invoice, which runs, and an $18,500 payment, which needs a person](../figures/terminal.png)
