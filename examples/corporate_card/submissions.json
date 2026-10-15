@@ -1,0 +1,11 @@
+[
+  {"minute": 5,  "tool": "approve_expense", "employee": "Priya Shah", "team": "Sales", "merchant": "Bean & Leaf Cafe", "amount": 18.4, "category": "Meals", "memo": "Coffee with a prospect", "receipt": "attached"},
+  {"minute": 12, "tool": "approve_expense", "employee": "Marcus Lee", "team": "Engineering", "merchant": "Cloudbase", "amount": 86.0, "category": "Software", "memo": "Test environment for October", "receipt": "attached"},
+  {"minute": 20, "tool": "approve_expense", "employee": "Elena Rossi", "team": "Marketing", "merchant": "Skyline Hotel Chicago", "amount": 412.0, "category": "Travel", "memo": "Conference hotel, two nights", "receipt": "attached"},
+  {"minute": 26, "tool": "approve_expense", "employee": "Tom Becker", "team": "Sales", "merchant": "CityRide", "amount": 46.2, "category": "Travel", "memo": "Ride to the airport", "receipt": "missing"},
+  {"minute": 31, "tool": "approve_expense", "employee": "Daniel Kim", "team": "Sales", "merchant": "Harbor Grill", "amount": 2150.0, "category": "Client entertainment", "memo": "Dinner with the Globex team, 8 people", "receipt": "attached", "answer": {"minute": 34, "approved": true, "note": "Approved in the Q4 sales budget"}},
+  {"minute": 38, "tool": "approve_expense", "employee": "Ryan Cole", "team": "Operations", "merchant": "Lakeside Retreats", "amount": 1850.0, "category": "Events", "memo": "Deposit for the team offsite", "receipt": "attached", "answer": {"minute": 41, "approved": false, "note": "Offsites need VP sign off first"}},
+  {"minute": 44, "tool": "approve_expense", "employee": "Aisha Khan", "team": "Operations", "merchant": "OfficeHub", "amount": 1280.0, "category": "Office supplies", "memo": "Desks for two new hires", "receipt": "attached"},
+  {"minute": 48, "tool": "pay_employee_invoice", "employee": "Lena Park", "team": "Marketing", "merchant": "Studio Kova (freelance design)", "amount": 3200.0, "category": "Contractor invoice", "memo": "Brand refresh, final milestone", "receipt": "invoice attached"},
+  {"minute": 52, "tool": "approve_expense", "employee": "Sofia Martins", "team": "Engineering", "merchant": "Northpeak Computers", "amount": 7900.0, "category": "Equipment", "memo": "Laptops for three new engineers", "receipt": "attached"}
+]

@@ -11,6 +11,7 @@ Needs Node with the playwright package (npm install -g playwright).
 from __future__ import annotations
 
 import html
+import importlib.util
 import json
 import os
 import shlex
@@ -154,10 +155,16 @@ def main() -> None:
     clock.t = START + NOW
 
     figures = ROOT / "figures"
+    spec = importlib.util.spec_from_file_location("card_app", ROOT / "examples" / "corporate_card" / "app.py")
+    card_app = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(card_app)
+    card = card_app.make_server(0)
+    threading.Thread(target=card.serve_forever, daemon=True).start()
     with tempfile.TemporaryDirectory() as tmp:
         term = Path(tmp) / "terminal.html"
         terminal_page(term)
         shots = [
+            {"url": f"http://127.0.0.1:{card.server_port}/", "out": str(figures / "card_app.png"), "width": 1180, "height": 900, "waitFor": ".card"},
             {"url": url + "/", "out": str(figures / "review_page.png"), "width": 1180, "height": 900, "waitFor": ".card", "until": "section"},
             {"url": url + "/", "out": str(figures / "review_history.png"), "width": 1180, "height": 900, "waitFor": ".card", "section": 2},
             {"url": term.as_uri(), "out": str(figures / "terminal.png"), "width": 860, "height": 400, "until": ".win"},
@@ -174,7 +181,8 @@ def main() -> None:
             for name in ("dark.png", "phone.png"):
                 shutil.copy(Path(tmp) / name, Path(os.environ["SCREENSHOT_CHECKS"]) / name)
     srv.shutdown()
-    for s in shots[:3]:
+    card.shutdown()
+    for s in shots[:4]:
         print("wrote", Path(s["out"]).relative_to(ROOT))
 
 

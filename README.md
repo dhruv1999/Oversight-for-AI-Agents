@@ -2,7 +2,9 @@
 
 A free, open source library that decides which of an AI agent's actions need a person, and asks only as often as that person can actually pay attention.
 
-![The review page: 4 of 6 questions used this hour, with a $12,800 and a $420 invoice payment waiting for a decision](figures/review_page.png)
+![A corporate card approvals screen: an AI expense agent approved small spend on its own, and the finance approver sees only a $7,900 laptop order, a $3,200 contractor invoice and a $1,280 office supplies order](figures/card_app.png)
+
+*An example corporate card app built on the library ([source](examples/corporate_card/app.py)). The agent approves small spend itself; the finance approver only sees what needs them.*
 
 About half the interruptions of fixed approval rules, with less harm getting through. Tested in simulation, not yet in production.
 
@@ -60,6 +62,6 @@ Limits: the workdays and the reviewer are simulated, and the AI checkers are not
 
 ## More
 
-[Example app](examples/invoice_assistant.py) · [Usage](docs/usage.md) · [Use cases](docs/use_cases.md) · [Comparison](docs/comparison.md) · [Full results](docs/results.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat_model.md) · [Research notes](docs/research.md) · [Contributing](CONTRIBUTING.md)
+[Card approvals app](examples/corporate_card/app.py) · [Invoice assistant](examples/invoice_assistant.py) · [Usage](docs/usage.md) · [Use cases](docs/use_cases.md) · [Comparison](docs/comparison.md) · [Full results](docs/results.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat_model.md) · [Research notes](docs/research.md) · [Contributing](CONTRIBUTING.md)
 
 MIT licensed.

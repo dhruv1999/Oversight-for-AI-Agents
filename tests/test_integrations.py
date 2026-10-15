@@ -159,3 +159,45 @@ def test_invoice_assistant_example(answers, paid):
     assert "done: INV 2214" in r.stdout and "waiting: High risk, and the reviewer was asked recently" in r.stdout
     assert [p for p in ("paid $420", "paid $18,500") if p in r.stdout] == paid
     assert r.stdout.count("you said no") == (0 if paid else 2)
+
+
+def _card_app():
+    spec = importlib.util.spec_from_file_location("card_app", ROOT / "examples" / "corporate_card" / "app.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_corporate_card_example_routes_spend_by_size():
+    desk = _card_app().Desk()
+    status = {x["merchant"]: x["status"] for x in desk.items}
+    assert status["Bean & Leaf Cafe"] == "Approved by the agent"  # small, with a receipt
+    assert status["CityRide"] == "Approved after an automatic check"  # no receipt
+    assert status["Harbor Grill"] == "Approved by you" and status["Lakeside Retreats"] == "Rejected by you"
+    assert [desk.items[i]["merchant"] for i, x in enumerate(desk.items) if x["status"] == "waiting"] == [
+        "OfficeHub",
+        "Studio Kova (freelance design)",
+        "Northpeak Computers",
+    ]
+    assert desk.items[-1]["check"].risk == "critical"  # $7,900 always needs a person
+    page = desk.page()
+    assert "Needs your approval" in page and "$7,900.00" in page and "Over $5,000" in page
+
+
+def test_corporate_card_example_serves_and_records_answers():
+    import threading
+    import urllib.request
+
+    app = _card_app()
+    desk = app.Desk()
+    server = app.make_server(0, desk)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{server.server_port}"
+    try:
+        assert "Sofia Martins" in urllib.request.urlopen(url + "/").read().decode()
+        last = len(desk.items) - 1
+        urllib.request.urlopen(urllib.request.Request(url + "/decide", data=f"i={last}&approved=yes".encode()))
+        assert desk.items[last]["status"] == "Approved by you"
+    finally:
+        server.shutdown()
+        server.server_close()

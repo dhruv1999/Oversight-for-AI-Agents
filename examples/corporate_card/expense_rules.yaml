@@ -1,0 +1,27 @@
+# Risk rules for the corporate card example. Same format as oversight/policies/tools.yaml.
+# Small card spend with a receipt is low risk and runs on its own; rules only raise risk.
+version: 1
+
+unknown_tool: {category: exec, reversibility: costly, blast_radius: org, sensitivity: internal}
+
+tools:
+  approve_expense: {category: write, reversibility: reversible, blast_radius: self, sensitivity: internal}
+  pay_employee_invoice: {category: financial, reversibility: reversible, blast_radius: self, sensitivity: internal}
+
+rules:
+  - name: over-100
+    tool: approve_expense
+    param_gte: {amount: 100}
+    set: {category: financial}
+  - name: no-receipt
+    tool: approve_expense
+    param_regex: {receipt: '(?i)missing'}
+    set: {reversibility: costly}
+  - name: over-1000
+    tool: [approve_expense, pay_employee_invoice]
+    param_gte: {amount: 1000}
+    set: {category: financial, reversibility: costly, blast_radius: org}
+  - name: over-5000
+    tool: [approve_expense, pay_employee_invoice]
+    param_gte: {amount: 5000}
+    set: {category: financial, reversibility: irreversible, blast_radius: org}
