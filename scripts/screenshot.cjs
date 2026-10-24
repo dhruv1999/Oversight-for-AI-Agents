@@ -1,6 +1,7 @@
 // Photograph pages with Playwright. Called by scripts/screenshots.py, which passes a JSON list of shots:
-//   {url, out, width, height, scheme, waitFor, until, section}
-// `until` crops the picture just below that element; `section` keeps only the nth <section>.
+//   {url, out, width, height, scheme, waitFor, until, section, clipHeight}
+// `until` crops the picture just below that element; `section` keeps only the nth <section>;
+// `clipHeight` keeps the top of the page at a fixed height (for animation frames).
 const { chromium } = require("playwright");
 
 (async () => {
@@ -18,6 +19,8 @@ const { chromium } = require("playwright");
     if (s.until) {
       const box = await page.locator(s.until).first().boundingBox();
       clip = { x: 0, y: 0, width: s.width, height: Math.ceil(box.y + box.height + 24) };
+    } else if (s.clipHeight) {
+      clip = { x: 0, y: 0, width: s.width, height: s.clipHeight };
     } else if (s.section !== undefined) {
       const box = await page.locator("section").nth(s.section).boundingBox();
       clip = { x: 0, y: Math.max(0, box.y - 24), width: s.width, height: Math.ceil(box.height + 48) };

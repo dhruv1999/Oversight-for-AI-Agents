@@ -39,11 +39,14 @@ def why(check: Check) -> tuple[str, str]:
 class Desk:
     """Every submission, what Oversight decided, and what the approver answered."""
 
-    def __init__(self) -> None:
+    def __init__(self, submissions: list[dict[str, Any]] | None = None) -> None:
+        """Replays the sample morning, or the submissions given (an empty list starts the day empty)."""
         self.guard = Oversight(tools=HERE / "expense_rules.yaml")
         self.items: list[dict[str, Any]] = []
         self.now = START
-        for s in json.loads((HERE / "submissions.json").read_text(encoding="utf-8")):
+        if submissions is None:
+            submissions = json.loads((HERE / "submissions.json").read_text(encoding="utf-8"))
+        for s in submissions:
             self.submit(s)
 
     def submit(self, s: dict[str, Any]) -> None:

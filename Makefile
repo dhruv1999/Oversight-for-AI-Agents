@@ -16,9 +16,10 @@ reproduce:
 bench:
 	uv run python scripts/benchmark.py
 
-# the review page and terminal pictures in the README (needs node with playwright)
+# the pictures and the animation in the README (needs node with playwright)
 screenshots:
 	uv run python scripts/screenshots.py
+	uv run python scripts/make_gif.py
 
 # the same experiments with an AI model as the checker; spending stops at MAX_SPEND_USD
 #   make llm                                                     Claude (needs ANTHROPIC_API_KEY)

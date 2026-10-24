@@ -2,7 +2,7 @@
 
 A free, open source library that decides which of an AI agent's actions need a person, and asks only as often as that person can actually pay attention.
 
-![A corporate card approvals screen: an AI expense agent approved small spend on its own, and the finance approver sees only a $7,900 laptop order, a $3,200 contractor invoice and a $1,280 office supplies order](figures/card_app.png)
+![Animation of a corporate card approvals screen: an AI expense agent approves small spend on its own, sends a $7,900 laptop order, a $3,200 contractor invoice and a $1,280 office supplies order to the finance approver, who approves them](figures/card_app.gif)
 
 *An example corporate card app built on the library ([source](examples/corporate_card/app.py)). The agent approves small spend itself; the finance approver only sees what needs them.*
 
