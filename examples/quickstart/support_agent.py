@@ -1,5 +1,5 @@
 """A tiny customer support agent for the quickstart. No API key needed: the "model" is a few
-if statements, so you can see agent-regress catch a regression in seconds.
+if statements, so you can see agent-ratchet catch a regression in seconds.
 
 Set AGENT_VERSION=2 to simulate a prompt change that quietly breaks one behaviour: version 2
 refunds large orders itself instead of passing them to a manager.
@@ -8,7 +8,7 @@ refunds large orders itself instead of passing them to a manager.
 import os
 import re
 
-from agent_regress import record_usage, tool
+from agent_ratchet import record_usage, tool
 
 ORDERS = {"42": {"status": "shipped", "amount": 40}, "77": {"status": "delivered", "amount": 900}}
 

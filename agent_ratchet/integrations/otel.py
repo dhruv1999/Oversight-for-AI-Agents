@@ -1,7 +1,7 @@
 """OpenTelemetry GenAI spans: the vendor neutral format many tools can export (including
 OpenLLMetry, Logfire and frameworks that follow the OpenTelemetry GenAI semantic conventions).
 
-    from agent_regress.integrations.otel import from_spans, load_otlp_json
+    from agent_ratchet.integrations.otel import from_spans, load_otlp_json
     traj = from_spans(load_otlp_json("trace.json"))     # spans exported as OTLP JSON
     traj = from_spans(memory_exporter.get_finished_spans())   # or spans captured in a test
 

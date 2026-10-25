@@ -1,14 +1,14 @@
 [project]
-name = "agent-regress"
-version = "0.1.0"
-description = "Regression tests for AI agents: catch behaviour changes before they ship, in CI, with any framework."
+name = "agent-ratchet"
+dynamic = ["version"]
+description = "Regression tests for AI agents that fail a pull request only when a behaviour really got worse."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Dhruv Parmar" }]
 requires-python = ">=3.10"
 dependencies = []
-keywords = ["ai agents", "evaluation", "evals", "regression testing", "llm", "langgraph", "crewai", "openai agents", "google adk", "claude agent sdk", "langfuse", "opentelemetry"]
+keywords = ["ai agents", "evaluation", "evals", "regression testing", "ci", "pytest", "llm", "langgraph", "crewai", "openai agents", "google adk", "claude agent sdk", "langfuse", "opentelemetry"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -22,7 +22,7 @@ Homepage = "https://github.com/dhruv1999/Oversight-for-AI-Agents"
 Issues = "https://github.com/dhruv1999/Oversight-for-AI-Agents/issues"
 
 [project.scripts]
-agent-regress = "agent_regress.cli:main"
+agent-ratchet = "agent_ratchet.cli:main"
 
 [project.optional-dependencies]
 # only needed for model graded checks (expect.judge); everything else has no dependencies
@@ -37,8 +37,11 @@ dev = ["pytest>=8", "ruff>=0.16", "mypy>=1.13"]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.version]
+path = "agent_ratchet/__init__.py"
+
 [tool.hatch.build.targets.wheel]
-packages = ["agent_regress"]
+packages = ["agent_ratchet"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -52,7 +55,7 @@ target-version = "py310"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.mypy]
-packages = ["agent_regress"]
+packages = ["agent_ratchet"]
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]

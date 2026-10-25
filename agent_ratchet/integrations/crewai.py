@@ -1,6 +1,6 @@
 """CrewAI.
 
-    from agent_regress.integrations.crewai import wrap
+    from agent_ratchet.integrations.crewai import wrap
     suite = Suite(agent=wrap(build_crew), cases=[...])   # build_crew(input) returns a fresh Crew
 
 Tool calls are not part of a crew's output, so wrap() listens on CrewAI's event bus during the

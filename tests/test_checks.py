@@ -1,8 +1,9 @@
 import re
 
+import pytest
 from conftest import traj
 
-from agent_regress import ToolCall, expect
+from agent_ratchet import ToolCall, expect
 
 
 def test_calls_with_exact_regex_and_callable_args():
@@ -15,6 +16,20 @@ def test_calls_with_exact_regex_and_callable_args():
     assert not r.passed and "called lookup with" in r.detail
     r = expect.calls("refund")(t)
     assert not r.passed and "never called refund" in r.detail
+
+
+def test_type_matchers_and_long_details():
+    t = traj(ToolCall("refund", {"amount": 40, "note": "x" * 1000}))
+    assert expect.calls("refund", amount=int)(t).passed
+    assert not expect.calls("refund", amount=str)(t).passed
+    assert expect.calls("refund", amount=int).name == "calls refund(amount=any int)"
+    assert len(expect.calls("refund", amount=7)(t).detail) <= 300
+
+
+def test_rules_need_a_tool_name():
+    for rule in (expect.never_calls, expect.only_calls, expect.calls_in_order):
+        with pytest.raises(ValueError):
+            rule()
 
 
 def test_calls_counts():

@@ -1,7 +1,7 @@
 name: release
 # Push a tag like v0.1.0 to build and publish to PyPI.
 # One time setup on pypi.org: add this repository as a trusted publisher for the project
-# "agent-regress" (workflow: release.yml, environment: pypi). No API token is stored here.
+# "agent-ratchet" (workflow: release.yml, environment: pypi). No API token is stored here.
 on:
   push:
     tags: ["v*"]

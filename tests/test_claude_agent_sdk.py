@@ -6,7 +6,7 @@ pytest.importorskip("claude_agent_sdk")
 
 from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock, ToolResultBlock, ToolUseBlock, UserMessage  # noqa: E402
 
-from agent_regress import Case, Suite, expect  # noqa: E402
+from agent_ratchet import Case, Suite, expect  # noqa: E402
 
 
 def messages(is_error=False):

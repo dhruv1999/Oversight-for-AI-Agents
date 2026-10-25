@@ -1,16 +1,17 @@
-# Copy to .github/workflows/agent-regress.yml. Runs your suite on every pull request and fails
-# the check when a case gets worse than the baseline committed in .agent-regress/.
+# Copy to .github/workflows/agent-ratchet.yml. Runs your suite on every pull request and fails the
+# check when a case is worse than the baseline committed in .agent-ratchet/ by more than chance explains.
 name: agent regression tests
 on: pull_request
 jobs:
-  agent-regress:
+  agent-ratchet:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt agent-regress
-      - run: agent-regress run tests/agent_suite.py --repeats 5
+      - run: pip install -r requirements.txt git+https://github.com/dhruv1999/Oversight-for-AI-Agents
+      - run: agent-ratchet run tests/agent_suite.py
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

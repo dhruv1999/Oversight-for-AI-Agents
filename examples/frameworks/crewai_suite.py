@@ -1,10 +1,10 @@
-"""CrewAI. Needs OPENAI_API_KEY (CrewAI's default model).   agent-regress run examples/frameworks/crewai_suite.py"""
+"""CrewAI. Needs OPENAI_API_KEY (CrewAI's default model).   agent-ratchet run examples/frameworks/crewai_suite.py"""
 
 from crewai import Agent, Crew, Task
 from crewai.tools import tool
 
-from agent_regress import Case, Suite, expect
-from agent_regress.integrations.crewai import wrap
+from agent_ratchet import Case, Suite, expect
+from agent_ratchet.integrations.crewai import wrap
 
 
 @tool("lookup_order")

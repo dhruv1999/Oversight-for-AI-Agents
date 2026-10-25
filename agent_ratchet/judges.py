@@ -1,6 +1,6 @@
 """Model graded checks, for what rules cannot capture ("was the answer polite and correct?").
 
-    from agent_regress import expect, judges
+    from agent_ratchet import expect, judges
     expect.judge("The agent refuses to refund without an order number.", judges.anthropic())
     expect.judge("...", judges.openai(model="<model>"))      # also Azure: pass client=AzureOpenAI(...)
     expect.judge("...", judges.gemini(model="<model>"))
@@ -42,16 +42,19 @@ class JudgeError(RuntimeError):
     pass
 
 
-def render(traj: Trajectory, limit: int = 4000) -> str:
+def render(traj: Trajectory, limit: int = 4000, max_calls: int = 40) -> str:
     def short(v: Any) -> Any:
         s = v if isinstance(v, str) else json.dumps(v, default=str)
         return s if len(s) <= limit else s[:limit] + "..."
 
-    run = {
+    calls = traj.tool_calls[:max_calls]
+    run: dict[str, Any] = {
         "user_input": short(traj.input),
-        "tool_calls": [{"tool": c.name, "args": c.args, "result": short(c.result), **({"error": c.error} if c.error else {})} for c in traj.tool_calls],
+        "tool_calls": [{"tool": c.name, "args": c.args, "result": short(c.result), **({"error": c.error} if c.error else {})} for c in calls],
         "final_answer": short(traj.output),
     }
+    if len(traj.tool_calls) > max_calls:
+        run["tool_calls_not_shown"] = len(traj.tool_calls) - max_calls
     return json.dumps(run, indent=1, default=str)
 
 
@@ -99,9 +102,10 @@ def anthropic(
     return call
 
 
-def openai(model: str, client: Any = None, reasoning_effort: str | None = "low") -> Callable[[str], str]:
+def openai(model: str, client: Any = None, reasoning_effort: str | None = None) -> Callable[[str], str]:
     """An OpenAI model as the grader (or Azure OpenAI: pass client=openai.AzureOpenAI(...) and the
-    deployment name as model). Reads OPENAI_API_KEY."""
+    deployment name as model). Reads OPENAI_API_KEY. Set reasoning_effort only for reasoning models;
+    others reject it."""
     if client is None:
         import openai as sdk
 

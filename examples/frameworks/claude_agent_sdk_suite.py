@@ -1,10 +1,10 @@
 """Claude Agent SDK. Needs the Claude Code CLI and ANTHROPIC_API_KEY.
-agent-regress run examples/frameworks/claude_agent_sdk_suite.py"""
+agent-ratchet run examples/frameworks/claude_agent_sdk_suite.py"""
 
 from claude_agent_sdk import ClaudeAgentOptions
 
-from agent_regress import Case, Suite, expect
-from agent_regress.integrations.claude_agent_sdk import wrap
+from agent_ratchet import Case, Suite, expect
+from agent_ratchet.integrations.claude_agent_sdk import wrap
 
 options = ClaudeAgentOptions(allowed_tools=["Read", "Grep", "Glob"], permission_mode="default", max_turns=8)
 

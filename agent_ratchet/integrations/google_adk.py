@@ -1,6 +1,6 @@
 """Google Agent Development Kit (ADK).
 
-    from agent_regress.integrations.google_adk import wrap
+    from agent_ratchet.integrations.google_adk import wrap
     suite = Suite(agent=wrap(root_agent), cases=[...])
 
 or collect the events from runner.run_async(...) yourself and return the list.
@@ -45,7 +45,7 @@ def from_events(events: list[Any], input: Any = None) -> Trajectory:
     return traj
 
 
-def wrap(agent: Any, app_name: str = "agent_regress", user_id: str = "agent-regress") -> Any:
+def wrap(agent: Any, app_name: str = "agent_ratchet", user_id: str = "agent-ratchet") -> Any:
     """An async function that runs `agent` in a fresh in-memory session and returns its Trajectory."""
 
     async def run(input: Any) -> Trajectory:

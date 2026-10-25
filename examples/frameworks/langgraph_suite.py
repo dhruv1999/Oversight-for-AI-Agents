@@ -1,11 +1,11 @@
 """LangGraph (or any LangChain agent built on it). Needs ANTHROPIC_API_KEY.
-agent-regress run examples/frameworks/langgraph_suite.py"""
+agent-ratchet run examples/frameworks/langgraph_suite.py"""
 
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 
-from agent_regress import Case, Suite, expect
-from agent_regress.integrations.langgraph import wrap
+from agent_ratchet import Case, Suite, expect
+from agent_ratchet.integrations.langgraph import wrap
 
 
 @tool

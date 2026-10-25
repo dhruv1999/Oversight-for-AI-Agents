@@ -12,8 +12,8 @@ from langgraph.graph import END, START, StateGraph  # noqa: E402
 from langgraph.graph.message import add_messages  # noqa: E402
 from langgraph.prebuilt import ToolNode  # noqa: E402
 
-from agent_regress import Case, Suite, expect  # noqa: E402
-from agent_regress.integrations.langgraph import from_state, wrap  # noqa: E402
+from agent_ratchet import Case, Suite, expect  # noqa: E402
+from agent_ratchet.integrations.langgraph import from_state, wrap  # noqa: E402
 
 
 @lc_tool
@@ -58,6 +58,21 @@ def test_wrap_reads_tool_calls_errors_answer_and_usage():
     assert t.tools == ["lookup_order", "issue_refund"] and "shipped" in t.tool_calls[0].result
     assert t.tool_calls[1].error and "refunds are disabled" in t.tool_calls[1].error
     assert (t.llm_calls, t.input_tokens, t.output_tokens) == (2, 200, 40)
+
+
+def test_runs_never_share_a_conversation():
+    from langgraph.checkpoint.memory import InMemorySaver
+
+    g = StateGraph(State)
+    g.add_node("model", model)
+    g.add_node("tools", ToolNode([lookup_order, issue_refund], handle_tool_errors=True))
+    g.add_edge(START, "model")
+    g.add_conditional_edges("model", lambda s: "tools" if s["messages"][-1].tool_calls else END, ["tools", END])
+    g.add_edge("tools", "model")
+    graph = g.compile(checkpointer=InMemorySaver())
+    # even a fixed thread_id is replaced: with a checkpointer, later runs would otherwise see earlier ones
+    result = Suite(wrap(graph, {"configurable": {"thread_id": "shared"}}), [Case("a", "x")], repeats=3, concurrency=1).run()
+    assert [r.trajectory.llm_calls for r in result.cases[0].runs] == [2, 2, 2]
 
 
 def test_returned_state_and_plain_message_lists():

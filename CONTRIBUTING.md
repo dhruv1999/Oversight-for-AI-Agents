@@ -22,16 +22,23 @@ uv run pytest
 
 CrewAI runs in its own CI job because of its dependency pins.
 
+Changes to how verdicts are made should keep the false alarm numbers in the README true. Check with:
+
+```bash
+uv run python benchmarks/gate_simulation.py
+```
+
 ## Guidelines
 
-- Keep the core free of dependencies. Framework code goes in `agent_regress/integrations/` and imports the framework inside functions.
+- Keep the core free of dependencies. Framework code goes in `agent_ratchet/integrations/` and imports the framework inside functions.
 - Test integrations against the real framework with a scripted model, not mocks of the framework, so changes in the framework show up.
 - Checks must never call a model unless they are a judge, and a check that cannot decide must fail.
+- Saved baselines must never contain inputs, answers or tool data.
 - Keep messages and reports plain and short.
 
 ## Adding an integration
 
-1. Add `agent_regress/integrations/<name>.py` with a function that turns the framework's output into a `Trajectory`, and a `wrap()` that runs the agent.
+1. Add `agent_ratchet/integrations/<name>.py` with a function that turns the framework's output into a `Trajectory`, and a `wrap()` that runs the agent.
 2. If the framework's return value is easy to recognise, add it to `integrations/auto.py`.
 3. Add a test in `tests/` and an example in `examples/frameworks/`.
 4. Add a row to the README and a section to `docs/integrations.md`.

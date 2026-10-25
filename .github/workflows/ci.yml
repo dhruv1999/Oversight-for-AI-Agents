@@ -58,8 +58,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m venv /tmp/env && /tmp/env/bin/pip install .
-      - run: |
+      - run: python -m venv /tmp/env && /tmp/env/bin/pip install . pytest
+      - name: command line
+        run: |
           cd /tmp
-          /tmp/env/bin/agent-regress run "$GITHUB_WORKSPACE/examples/quickstart/suite.py" --save-baseline
-          AGENT_VERSION=2 /tmp/env/bin/agent-regress run "$GITHUB_WORKSPACE/examples/quickstart/suite.py" && exit 1 || test $? -eq 1
+          /tmp/env/bin/agent-ratchet run "$GITHUB_WORKSPACE/examples/quickstart/suite.py" --save-baseline
+          AGENT_VERSION=2 /tmp/env/bin/agent-ratchet run "$GITHUB_WORKSPACE/examples/quickstart/suite.py" && exit 1 || test $? -eq 1
+      - name: pytest
+        run: |
+          cd /tmp
+          /tmp/env/bin/python -m pytest -q "$GITHUB_WORKSPACE/examples/quickstart"
+          AGENT_VERSION=2 /tmp/env/bin/python -m pytest -q "$GITHUB_WORKSPACE/examples/quickstart" && exit 1 || test $? -eq 1

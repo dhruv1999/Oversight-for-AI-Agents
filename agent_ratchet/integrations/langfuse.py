@@ -1,9 +1,9 @@
-"""Langfuse: turn production traces into test cases, and check production traces with the same rules.
+"""Langfuse: turn a production trace into a test case.
 
-    agent-regress import langfuse <trace-id>          prints a Case to paste into your suite
+    agent-ratchet import langfuse <trace-id>          prints a Case to paste into your suite
 
-    from agent_regress.integrations.langfuse import evaluate_trace
-    evaluate_trace("<trace-id>", [expect.never_calls("issue_refund")])   # results also saved as Langfuse scores
+    from agent_ratchet.integrations.langfuse import fetch_trace, from_trace
+    traj = from_trace(fetch_trace("<trace-id>"))
 
 Uses Langfuse's public REST API directly, so the Langfuse SDK is not required. Credentials come
 from LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_HOST (or LANGFUSE_BASE_URL).
@@ -14,10 +14,10 @@ from __future__ import annotations
 import base64
 import json
 import os
+import urllib.parse
 import urllib.request
 from typing import Any
 
-from ..checks import Check, CheckResult
 from ..trajectory import ToolCall, Trajectory, text_of
 from ._util import as_args, get
 
@@ -55,35 +55,18 @@ def from_trace(trace: Any) -> Trajectory:
     return traj
 
 
-def _api(path: str, body: dict[str, Any] | None = None, host: str | None = None, public_key: str | None = None, secret_key: str | None = None) -> Any:
+def _get(path: str, host: str | None = None, public_key: str | None = None, secret_key: str | None = None) -> Any:
     host = (host or os.environ.get("LANGFUSE_HOST") or os.environ.get("LANGFUSE_BASE_URL") or "https://cloud.langfuse.com").rstrip("/")
     pk = public_key or os.environ.get("LANGFUSE_PUBLIC_KEY")
     sk = secret_key or os.environ.get("LANGFUSE_SECRET_KEY")
     if not pk or not sk:
         raise ValueError("set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY (or pass public_key and secret_key)")
     auth = base64.b64encode(f"{pk}:{sk}".encode()).decode()
-    req = urllib.request.Request(
-        f"{host}{path}",
-        data=json.dumps(body).encode() if body is not None else None,
-        headers={"Authorization": f"Basic {auth}", "Content-Type": "application/json"},
-        method="POST" if body is not None else "GET",
-    )
+    req = urllib.request.Request(f"{host}{path}", headers={"Authorization": f"Basic {auth}"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read() or b"null")
 
 
 def fetch_trace(trace_id: str, **auth: Any) -> dict[str, Any]:
     """Download one trace with all its observations."""
-    return _api(f"/api/public/traces/{trace_id}", **auth)
-
-
-def evaluate_trace(trace_id: str, checks: list[Check], push: bool = True, **auth: Any) -> list[CheckResult]:
-    """Run checks on a production trace. With push=True each result is saved on the trace as a
-    Langfuse score (1 passed, 0 failed) named after the check."""
-    traj = from_trace(fetch_trace(trace_id, **auth))
-    results = [c(traj) for c in checks]
-    if push:
-        for r in results:
-            score = {"traceId": trace_id, "name": r.name, "value": 1 if r.passed else 0, "dataType": "BOOLEAN", "comment": r.detail or None}
-            _api("/api/public/scores", score, **auth)
-    return results
+    return _get(f"/api/public/traces/{urllib.parse.quote(trace_id, safe='')}", **auth)

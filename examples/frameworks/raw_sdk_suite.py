@@ -1,10 +1,10 @@
 """A hand written tool loop on the Anthropic SDK. Needs ANTHROPIC_API_KEY.
 The same pattern works with the OpenAI and Gemini SDKs: decorate tools with @tool and pass each
-model response to record_response.     agent-regress run examples/frameworks/raw_sdk_suite.py"""
+model response to record_response.     agent-ratchet run examples/frameworks/raw_sdk_suite.py"""
 
 import anthropic
 
-from agent_regress import Case, Suite, expect, judges, record_response, tool
+from agent_ratchet import Case, Suite, expect, judges, record_response, tool
 
 client = anthropic.Anthropic()
 TOOLS = [

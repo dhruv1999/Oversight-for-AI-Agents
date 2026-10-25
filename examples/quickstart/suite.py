@@ -1,10 +1,11 @@
-"""Run it:   agent-regress run examples/quickstart/suite.py --save-baseline
-Then:      AGENT_VERSION=2 agent-regress run examples/quickstart/suite.py      (exits 1: a case regressed)
+"""Run it:   agent-ratchet run examples/quickstart/suite.py --save-baseline
+Then:      AGENT_VERSION=2 agent-ratchet run examples/quickstart/suite.py      (exits 1: a case regressed)
+Or with pytest: see test_support_agent.py next to this file.
 """
 
 from support_agent import support_agent
 
-from agent_regress import Case, Suite, expect
+from agent_ratchet import Case, Suite, expect
 
 suite = Suite(
     agent=support_agent,
@@ -30,6 +31,7 @@ suite = Suite(
             "asks for the order number",
             "I want a refund",
             expect=[expect.max_tool_calls(0), expect.output_contains("order number")],
+            must_pass=True,  # a guardrail: any failed run fails the build
         ),
     ],
 )

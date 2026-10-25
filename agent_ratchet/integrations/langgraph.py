@@ -1,6 +1,6 @@
 """LangGraph (and LangChain agents built on it).
 
-    from agent_regress.integrations.langgraph import wrap
+    from agent_ratchet.integrations.langgraph import wrap
     suite = Suite(agent=wrap(graph), cases=[...])
 
 or return the state from graph.invoke(...) yourself; any state with a "messages" list works.
@@ -8,6 +8,7 @@ or return the state from graph.invoke(...) yourself; any state with a "messages"
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from ..trajectory import ToolCall, Trajectory, text_of
@@ -50,10 +51,14 @@ def from_state(state: Any, input: Any = None) -> Trajectory:
 
 
 def wrap(graph: Any, config: Any = None) -> Any:
-    """A function that sends the input as a user message to a compiled graph and returns its Trajectory."""
+    """A function that sends the input as a user message to a compiled graph and returns its Trajectory.
+
+    Every run gets its own thread_id, so with a checkpointer one run never sees another's messages."""
 
     def run(input: Any) -> Trajectory:
-        state = graph.invoke({"messages": [{"role": "user", "content": str(input)}]}, config)
+        cfg = dict(config or {})
+        cfg["configurable"] = {**cfg.get("configurable", {}), "thread_id": f"agent-ratchet-{uuid.uuid4().hex}"}
+        state = graph.invoke({"messages": [{"role": "user", "content": str(input)}]}, cfg)
         return from_state(state, input)
 
     run.__name__ = str(get(graph, "name", default="langgraph_agent")).replace(" ", "_")

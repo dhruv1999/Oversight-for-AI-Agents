@@ -1,6 +1,6 @@
 """Claude Agent SDK.
 
-    from agent_regress.integrations.claude_agent_sdk import wrap
+    from agent_ratchet.integrations.claude_agent_sdk import wrap
     suite = Suite(agent=wrap(ClaudeAgentOptions(...)), cases=[...])
 
 or collect the messages from query(...) yourself and return the list.

@@ -1,7 +1,7 @@
 """Record tool calls from any Python agent, including hand written loops on the OpenAI,
 Anthropic or Gemini SDKs.
 
-    from agent_regress import tool, record_usage
+    from agent_ratchet import tool, record_usage
 
     @tool
     def lookup_order(order_id: str) -> str: ...
@@ -22,7 +22,7 @@ from typing import Any, TypeVar, overload
 from .trajectory import ToolCall, Trajectory
 
 F = TypeVar("F", bound=Callable[..., Any])
-_current: ContextVar[Trajectory | None] = ContextVar("agent_regress_trajectory", default=None)
+_current: ContextVar[Trajectory | None] = ContextVar("agent_ratchet_trajectory", default=None)
 
 
 def current() -> Trajectory | None:
@@ -123,6 +123,8 @@ def record_response(response: Any) -> None:
         inp = getattr(usage, "input_tokens", None)  # Anthropic, OpenAI Responses API
         if inp is None:
             inp = getattr(usage, "prompt_tokens", 0)  # OpenAI Chat Completions
+        # Anthropic reports cached prompt tokens separately; they still fill the context window
+        inp = (inp or 0) + (getattr(usage, "cache_read_input_tokens", 0) or 0) + (getattr(usage, "cache_creation_input_tokens", 0) or 0)
         out = getattr(usage, "output_tokens", None)
         if out is None:
             out = getattr(usage, "completion_tokens", 0)

@@ -13,8 +13,8 @@ from crewai import Agent, Crew, Task  # noqa: E402
 from crewai.llms.base_llm import BaseLLM  # noqa: E402
 from crewai.tools import tool as crew_tool  # noqa: E402
 
-from agent_regress import Case, Suite, expect  # noqa: E402
-from agent_regress.integrations.crewai import wrap  # noqa: E402
+from agent_ratchet import Case, Suite, expect  # noqa: E402
+from agent_ratchet.integrations.crewai import wrap  # noqa: E402
 
 
 @crew_tool("lookup_order")

@@ -10,8 +10,8 @@ pytest.importorskip("agents")
 from agents import Agent, Model, ModelResponse, Usage, function_tool  # noqa: E402
 from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage, ResponseOutputText  # noqa: E402
 
-from agent_regress import Case, Suite, expect  # noqa: E402
-from agent_regress.integrations.openai_agents import wrap  # noqa: E402
+from agent_ratchet import Case, Suite, expect  # noqa: E402
+from agent_ratchet.integrations.openai_agents import wrap  # noqa: E402
 
 
 @function_tool

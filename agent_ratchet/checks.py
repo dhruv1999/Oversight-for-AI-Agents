@@ -1,6 +1,6 @@
 """Checks: what an agent run must and must not do.
 
-    from agent_regress import expect
+    from agent_ratchet import expect
 
     expect.calls("lookup_order", order_id="42")
     expect.never_calls("issue_refund")
@@ -10,7 +10,7 @@
 
 Each check takes a Trajectory and returns a CheckResult. Checks are plain functions of the run,
 with no model calls, so they are free, fast and give the same answer every time. For judgement
-calls, `expect.judge` asks a model (see agent_regress.judges).
+calls, `expect.judge` asks a model (see agent_ratchet.judges).
 """
 
 from __future__ import annotations
@@ -41,13 +41,19 @@ class Check:
         try:
             passed, detail = self.fn(traj)
         except Exception as e:  # a broken check fails; it never passes silently
-            return CheckResult(self.name, False, f"check raised {type(e).__name__}: {e}")
-        return CheckResult(self.name, bool(passed), detail)
+            return CheckResult(self.name, False, _short(f"check raised {type(e).__name__}: {e}"))
+        return CheckResult(self.name, bool(passed), _short(str(detail)))
+
+
+def _short(detail: str, limit: int = 300) -> str:
+    return detail if len(detail) <= limit else detail[: limit - 3] + "..."
 
 
 def _describe(value: Any) -> str:
     if isinstance(value, re.Pattern):
         return f"/{value.pattern}/"
+    if isinstance(value, type):
+        return f"any {value.__name__}"
     if callable(value):
         return getattr(value, "__name__", "a condition")
     return repr(value)
@@ -56,6 +62,8 @@ def _describe(value: Any) -> str:
 def _matches(expected: Any, actual: Any) -> bool:
     if isinstance(expected, re.Pattern):
         return actual is not None and expected.search(str(actual)) is not None
+    if isinstance(expected, type):
+        return isinstance(actual, expected)
     if callable(expected):
         return bool(expected(actual))
     return bool(expected == actual)
@@ -68,8 +76,8 @@ def _args_match(call: ToolCall, expected: dict[str, Any]) -> bool:
 def calls(tool: str, *, times: int | None = None, at_least: int = 1, **args: Any) -> Check:
     """The agent calls `tool`, optionally with matching arguments.
 
-    Argument values can be exact values, compiled regular expressions, or functions that return
-    True for an acceptable value. `times` asks for an exact count; `at_least` for a minimum.
+    Argument values can be exact values, compiled regular expressions, types (any value of that
+    type), or functions that return True for an acceptable value. `times` asks for an exact count; `at_least` for a minimum.
     """
     shown = ", ".join(f"{k}={_describe(v)}" for k, v in args.items())
     name = f"calls {tool}({shown})" + (f" {times} times" if times is not None else "")
@@ -87,8 +95,14 @@ def calls(tool: str, *, times: int | None = None, at_least: int = 1, **args: Any
     return Check(name, fn)
 
 
+def _need_tools(check: str, tools: tuple[str, ...]) -> None:
+    if not tools:
+        raise ValueError(f"expect.{check}() needs at least one tool name")
+
+
 def never_calls(*tools: str) -> Check:
     """The agent never calls any of these tools."""
+    _need_tools("never_calls", tools)
 
     def fn(t: Trajectory) -> tuple[bool, str]:
         bad = [n for n in t.tools if n in tools]
@@ -99,6 +113,7 @@ def never_calls(*tools: str) -> Check:
 
 def only_calls(*tools: str) -> Check:
     """Every tool the agent calls is one of these."""
+    _need_tools("only_calls", tools)
 
     def fn(t: Trajectory) -> tuple[bool, str]:
         extra = [n for n in t.tools if n not in tools]
@@ -109,6 +124,7 @@ def only_calls(*tools: str) -> Check:
 
 def calls_in_order(*tools: str) -> Check:
     """These tools are called in this order (other calls may happen in between)."""
+    _need_tools("calls_in_order", tools)
 
     def fn(t: Trajectory) -> tuple[bool, str]:
         i = 0
@@ -207,7 +223,7 @@ def check(fn: Callable[[Trajectory], Any], name: str | None = None) -> Check:
 
 
 def judge(rubric: str, llm: Callable[[str], str], name: str | None = None) -> Check:
-    """A model grades the run against a rubric. See agent_regress.judges for ready made graders."""
+    """A model grades the run against a rubric. See agent_ratchet.judges for ready made graders."""
     from .judges import judge as _judge
 
     return _judge(rubric, llm, name)

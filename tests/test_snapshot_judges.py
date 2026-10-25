@@ -2,8 +2,8 @@ import json
 
 from conftest import traj
 
-from agent_regress import ToolCall, expect, judges, snapshot
-from agent_regress.snapshot import case_code
+from agent_ratchet import ToolCall, expect, judges, snapshot
+from agent_ratchet.snapshot import case_code
 
 
 def test_snapshot_makes_a_case_the_run_passes():
@@ -13,7 +13,7 @@ def test_snapshot_makes_a_case_the_run_passes():
     assert not all(c(traj("refund", "lookup")).passed for c in case.expect)
     code = case_code(t, "refund flow")
     assert "expect.calls_in_order('lookup', 'refund')" in code and "Refunded." in code
-    from agent_regress import Case  # noqa: F401  the generated code must evaluate
+    from agent_ratchet import Case  # noqa: F401  the generated code must evaluate
 
     assert eval(code.rstrip(",")).name == "refund flow"
 
@@ -85,5 +85,7 @@ def test_openai_grader_request():
     r = expect.judge("x", judges.openai("some-model", client=client))(traj())
     assert not r.passed and r.detail == "no"
     assert client.kwargs["response_format"]["json_schema"]["strict"] is True
+    assert "reasoning_effort" not in client.kwargs  # models without reasoning reject it
+    expect.judge("x", judges.openai("some-model", client=client, reasoning_effort="low"))(traj())
     assert client.kwargs["reasoning_effort"] == "low"
     assert not expect.judge("x", judges.openai("m", client=FakeOpenAI(refusal="no")))(traj()).passed

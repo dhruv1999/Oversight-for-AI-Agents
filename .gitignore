@@ -5,4 +5,4 @@ dist/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-.agent-regress/
+.agent-ratchet/

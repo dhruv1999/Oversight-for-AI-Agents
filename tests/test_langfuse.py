@@ -5,8 +5,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from agent_regress import expect
-from agent_regress.integrations.langfuse import evaluate_trace, fetch_trace, from_trace
+from agent_ratchet.integrations.langfuse import fetch_trace, from_trace
 
 TRACE = {
     "id": "tr-1",
@@ -45,7 +44,7 @@ def test_from_trace_snake_case_sums_generation_cost():
 
 @pytest.fixture
 def langfuse(monkeypatch):
-    seen = {"scores": [], "auth": None}
+    seen = {"paths": [], "auth": None}
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -60,11 +59,8 @@ def langfuse(monkeypatch):
 
         def do_GET(self):
             seen["auth"] = self.headers["Authorization"]
+            seen["paths"].append(self.path)
             self._send(TRACE if self.path == "/api/public/traces/tr-1" else {})
-
-        def do_POST(self):
-            seen["scores"].append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
-            self._send({"id": "s"})
 
     server = HTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -77,12 +73,11 @@ def langfuse(monkeypatch):
     server.shutdown()
 
 
-def test_fetch_and_score_a_production_trace(langfuse):
-    assert fetch_trace("tr-1")["id"] == "tr-1"
+def test_fetch_a_production_trace(langfuse):
+    assert from_trace(fetch_trace("tr-1")).tools == ["lookup_order", "escalate", "notify"]
     assert langfuse["auth"] == "Basic " + base64.b64encode(b"pk:sk").decode()
-    results = evaluate_trace("tr-1", [expect.calls("escalate"), expect.no_tool_errors()])
-    assert [r.passed for r in results] == [True, False]
-    assert [(s["traceId"], s["value"], s["dataType"]) for s in langfuse["scores"]] == [("tr-1", 1, "BOOLEAN"), ("tr-1", 0, "BOOLEAN")]
+    fetch_trace("../scores?x=1")  # an id is never read as a path
+    assert langfuse["paths"][-1] == "/api/public/traces/..%2Fscores%3Fx%3D1"
 
 
 def test_missing_credentials(monkeypatch):

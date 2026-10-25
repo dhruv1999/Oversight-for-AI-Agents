@@ -1,9 +1,9 @@
-"""OpenAI Agents SDK. Needs OPENAI_API_KEY.   agent-regress run examples/frameworks/openai_agents_suite.py"""
+"""OpenAI Agents SDK. Needs OPENAI_API_KEY.   agent-ratchet run examples/frameworks/openai_agents_suite.py"""
 
 from agents import Agent, function_tool
 
-from agent_regress import Case, Suite, expect
-from agent_regress.integrations.openai_agents import wrap
+from agent_ratchet import Case, Suite, expect
+from agent_ratchet.integrations.openai_agents import wrap
 
 
 @function_tool

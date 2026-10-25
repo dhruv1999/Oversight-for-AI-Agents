@@ -3,7 +3,7 @@ import threading
 
 import pytest
 
-from agent_regress import record_response, record_usage, recording, tool
+from agent_ratchet import record_response, record_usage, recording, tool
 
 
 @tool
@@ -67,4 +67,5 @@ def test_record_response_reads_each_sdk_shape():
         record_response(Obj(usage=Obj(input_tokens=10, output_tokens=2)))  # Anthropic, OpenAI Responses
         record_response(Obj(usage=Obj(prompt_tokens=5, completion_tokens=1)))  # OpenAI Chat Completions
         record_response(Obj(usage_metadata=Obj(prompt_token_count=7, candidates_token_count=3, thoughts_token_count=4)))  # Gemini
-    assert (t.llm_calls, t.input_tokens, t.output_tokens) == (3, 22, 10)
+        record_response(Obj(usage=Obj(input_tokens=5, output_tokens=1, cache_read_input_tokens=100, cache_creation_input_tokens=20)))
+    assert (t.llm_calls, t.input_tokens, t.output_tokens) == (4, 147, 11)

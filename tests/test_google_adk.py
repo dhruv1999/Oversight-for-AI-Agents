@@ -10,8 +10,8 @@ from google.adk.agents import LlmAgent  # noqa: E402
 from google.adk.models import BaseLlm, LlmResponse  # noqa: E402
 from google.genai import types  # noqa: E402
 
-from agent_regress import Case, Suite, expect  # noqa: E402
-from agent_regress.integrations.google_adk import wrap  # noqa: E402
+from agent_ratchet import Case, Suite, expect  # noqa: E402
+from agent_ratchet.integrations.google_adk import wrap  # noqa: E402
 
 
 class Scripted(BaseLlm):

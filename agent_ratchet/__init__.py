@@ -1,14 +1,14 @@
-"""agent-regress: regression tests for AI agents.
+"""agent-ratchet: regression tests for AI agents. Your agent can get better; it cannot quietly get worse.
 
-    from agent_regress import Case, Suite, expect
+    from agent_ratchet import Case, Suite, expect
 
-    suite = Suite(agent=my_agent, repeats=3, cases=[
+    suite = Suite(agent=my_agent, cases=[
         Case("refund needs an order number", "Refund my last order",
              expect=[expect.never_calls("issue_refund"), expect.output_contains("order number")]),
     ])
 
-Run it with `agent-regress run suite.py`; save a baseline with `--save-baseline`; later runs
-fail when a case gets worse.
+Save a baseline with `agent-ratchet run suite.py --save-baseline`. Later runs fail when a case
+gets worse by more than chance explains, or when a must pass case fails.
 """
 
 __version__ = "0.1.0"
@@ -20,6 +20,7 @@ from .compare import Comparison, compare  # noqa: E402
 from .recording import record_response, record_usage, recording, tool  # noqa: E402
 from .snapshot import snapshot  # noqa: E402
 from .suite import Case, CaseResult, RunResult, Suite, SuiteResult  # noqa: E402
+from .testing import assert_no_regressions  # noqa: E402
 from .trajectory import ToolCall, Trajectory  # noqa: E402
 
 __all__ = [
@@ -33,6 +34,7 @@ __all__ = [
     "SuiteResult",
     "ToolCall",
     "Trajectory",
+    "assert_no_regressions",
     "compare",
     "expect",
     "judges",
