@@ -1,0 +1,16 @@
+# Copy to .github/workflows/agent-regress.yml. Runs your suite on every pull request and fails
+# the check when a case gets worse than the baseline committed in .agent-regress/.
+name: agent regression tests
+on: pull_request
+jobs:
+  agent-regress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt agent-regress
+      - run: agent-regress run tests/agent_suite.py --repeats 5
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

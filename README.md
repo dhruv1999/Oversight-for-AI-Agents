@@ -1,76 +1,163 @@
-# Oversight for AI Agents
+# agent-regress
 
-A free, open source library that decides which of an AI agent's actions need a person, and asks only as often as that person can actually pay attention.
+[![CI](https://github.com/dhruv1999/Oversight-for-AI-Agents/actions/workflows/ci.yml/badge.svg)](https://github.com/dhruv1999/Oversight-for-AI-Agents/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 
-![Animation of a corporate card approvals screen: an AI expense agent approves small spend on its own, sends a $7,900 laptop order, a $3,200 contractor invoice and a $1,280 office supplies order to the finance approver, who approves them](figures/card_app.gif)
+**Regression tests for AI agents.** Catch the prompt change, model upgrade or tool edit that quietly breaks your agent, before it ships.
 
-*An example corporate card app built on the library ([source](examples/corporate_card/app.py)). The agent approves small spend itself; the finance approver only sees what needs them.*
-
-About half the interruptions of fixed approval rules, with less harm getting through. Tested in simulation, not yet in production.
-
-```
-pip install git+https://github.com/dhruv1999/Oversight-for-AI-Agents
+```bash
+pip install agent-regress
 ```
 
 ## The problem
 
-* AI agents now take real actions: they pay invoices, email customers and change records.
-* The usual safeguard is a person who approves the risky ones.
-* By the fiftieth request of the day, people approve without reading. Oversight treats that person's attention as a budget and spends it only where it changes the outcome.
+Agents break in ways normal tests miss.
+
+- **Small changes have side effects.** A tweak to fix one conversation changes how the agent handles ten others.
+- **Model upgrades shift behaviour.** The new model is better on average and worse on the one flow your customers rely on.
+- **Runs are random.** The same input passes on Monday and fails on Tuesday, so a single passing run proves little.
+- **Failures are in the steps, not the answer.** The reply reads fine, but the agent skipped a lookup or called the refund tool it should never call.
+
+## Who it is for
+
+- **Engineers shipping agents** who want a check on every pull request, like unit tests.
+- **Teams on LangGraph, CrewAI, OpenAI Agents SDK, Google ADK or Claude Agent SDK** who want one tool across frameworks.
+- **Teams already tracing in Langfuse or OpenTelemetry** who want production traces to become tests.
+
+## Why another tool
+
+Regression testing in CI is where agent evaluation is still mostly paid.
+
+| Tool | What it is | For regression testing in CI |
+|---|---|---|
+| Braintrust | Paid platform | Strong experiment diffs and CI gates, in their cloud |
+| LangSmith | Paid platform, per seat | Datasets and comparisons, tied to their platform |
+| promptfoo | Open source, owned by OpenAI since March 2026 | Built for prompts and red teaming more than agent steps |
+| DeepEval, Ragas, Inspect | Open source | Score single runs well; comparing runs over time is left to you or a paid add on |
+| Langfuse | Open source tracing | Great for seeing production; not a test runner for pull requests |
+| **agent-regress** | **Open source, MIT, runs locally** | **Repeated runs, a saved baseline and a pass or fail for every pull request** |
+
+More detail and sources in [docs/why.md](docs/why.md).
 
 ## What it does
 
-* **Asks a person only when it matters,** and only as often as they can handle *(attention budget)*.
-* **Lets routine actions run on their own,** with an automatic checker on anything in between *(risk tiers, rules or AI checker)*.
-* **Never lets large or risky actions through without a person.** If nobody is around, they wait *(critical tier, approval queue)*.
-* **Keeps a record of every decision,** with who decided and why *(audit log)*.
-
-| Team | Agents in products like | What changes |
-|---|---|---|
-| Finance | Ramp, Brex, Bill.com | nothing that moves money runs without a person |
-| Customer support | Zendesk, Intercom | a message to every customer always needs a person |
-| Engineering | GitHub Copilot, Cursor, Claude Code | tests run freely; deleting files or running unknown scripts needs the developer |
-| IT and operations | ServiceNow, Okta | at night, risky actions wait for morning instead of running unattended |
-
-*The company names show the kind of product this is built for. None of them uses or endorses this project.*
-
-## How it decides
-
-Each action gets a risk level from what it would actually do, not from what the agent says about it.
-
-| Risk | Example | Who decides |
-|---|---|---|
-| Low | look up an invoice | nobody, it runs |
-| Medium | email a colleague | an automatic checker: free rules, or a model from Anthropic, OpenAI, Azure or Google |
-| High | pay an invoice, change a vendor's bank details | a person, while they have attention left this hour |
-| Critical | pay $10,000 or more, send a secret outside the company | always a person; if nobody is around, it waits |
-
-When the person is busy or away, high risk actions go to the checker, which can block them but never approve them, so the rest wait in a queue. Every decision is logged with its reasons.
+- **Behaviour checks.** Write what the agent must and must not do: which tools, with which arguments, in which order, and what the answer says. *(deterministic, no model calls)*
+- **Repeated runs.** Every case runs several times, so you see pass rates instead of one lucky result. *(pass^k, 95% intervals)*
+- **Baseline diff.** Each run is compared with the last good one, and only real drops fail the build. *(saved JSON baseline, tolerance)*
+- **Cost and speed budgets.** Fail when a change makes the agent much slower or more expensive. *(token cost, latency)*
+- **CI ready.** Exit code 1 on a regression and a Markdown summary on the pull request. *(GitHub Actions summary)*
+- **Production to tests.** Turn a Langfuse or OpenTelemetry trace into a test case in one command.
+- **Optional model graders.** For things rules cannot capture, with Claude, OpenAI, Azure OpenAI or Gemini. *(LLM as judge)*
 
 ## Quickstart
 
-```python
-from oversight import Oversight
+No API key needed. The example agent is a few lines of plain Python.
 
-guard = Oversight()
-print(guard.check("pay_invoice", {"vendor": "Acme", "amount": 420}).summary)  # High risk, and the reviewer has attention left this hour.
+```bash
+git clone https://github.com/dhruv1999/Oversight-for-AI-Agents && cd Oversight-for-AI-Agents
+pip install -e .
+agent-regress run examples/quickstart/suite.py --save-baseline
+AGENT_VERSION=2 agent-regress run examples/quickstart/suite.py
 ```
 
-A small working app: [examples/invoice_assistant.py](examples/invoice_assistant.py). It also works with LangChain, the OpenAI Agents SDK, MCP, any language over HTTP, Claude Code and shell scripts; see [usage](docs/usage.md).
+The second command simulates a prompt change that makes the agent refund large orders itself instead of passing them to a manager:
 
-## Results
+```text
+case                            passed  baseline  status
+------------------------------  ------  --------  -------------------------------------
+order status                    3/3     3/3       ok
+small refund is handled         3/3     3/3       ok
+large refund goes to a manager  0/3     3/3       REGRESSED (check with more repeats)
+asks for the order number       3/3     3/3       ok
 
-<!-- headline:start (generated by scripts/make_report.py from results/heuristic; do not edit) -->
-On 300 simulated workdays it interrupted people about half as often as fixed approval rules (6.5 times a day
-instead of 12.8), and less harm got through (18.9% of harmful actions instead of 22.1%).
+large refund goes to a manager: pass rate 100% -> 0%
+  calls escalate_to_human(order_id='77'): failed 3/3 (never called escalate_to_human; called ['lookup_order', 'issue_refund'])
+  never calls issue_refund: failed 3/3 (called issue_refund)
 
-![Interruptions per day and harmful actions that got through, fixed approval rules vs this project](figures/hero.png)
-<!-- headline:end -->
+9/12 runs passed across 4 cases; 1 regressed
+```
 
-Limits: the workdays and the reviewer are simulated, and the AI checkers are not yet evaluated. Details are in the [full results](docs/results.md#what-these-numbers-do-and-do-not-show) and the [architecture](docs/architecture.md).
+It exits with code 1, so CI fails.
 
-## More
+## Writing a suite
 
-[Card approvals app](examples/corporate_card/app.py) · [Invoice assistant](examples/invoice_assistant.py) · [Usage](docs/usage.md) · [Use cases](docs/use_cases.md) · [Comparison](docs/comparison.md) · [Full results](docs/results.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat_model.md) · [Research notes](docs/research.md) · [Contributing](CONTRIBUTING.md)
+A suite is a Python file with your agent and the cases it must handle.
+
+```python
+from agent_regress import Case, Suite, expect
+from agent_regress.integrations.langgraph import wrap
+from my_app import graph
+
+suite = Suite(
+    agent=wrap(graph),
+    repeats=5,
+    cases=[
+        Case("order status", "Where is order 42?", [
+            expect.calls("lookup_order", order_id="42"),
+            expect.output_contains("shipped"),
+        ]),
+        Case("large refund", "Refund order 77", [
+            expect.calls("escalate_to_human"),
+            expect.never_calls("issue_refund"),
+            expect.max_cost(0.05),
+        ]),
+    ],
+)
+```
+
+```bash
+agent-regress run tests/agent_suite.py --save-baseline   # once, on a version you trust
+agent-regress run tests/agent_suite.py                   # on every change
+```
+
+Commit the baseline in `.agent-regress/` so CI compares against it. The full list of checks is in [docs/guide.md](docs/guide.md).
+
+## Integrations
+
+| Framework or tool | How |
+|---|---|
+| LangGraph and LangChain | `integrations.langgraph.wrap(graph)` |
+| CrewAI | `integrations.crewai.wrap(build_crew)` |
+| OpenAI Agents SDK | `integrations.openai_agents.wrap(agent)` |
+| Google ADK | `integrations.google_adk.wrap(agent)` |
+| Claude Agent SDK | `integrations.claude_agent_sdk.wrap(options)` |
+| Langfuse | `agent-regress import langfuse <trace-id>`, or score production traces |
+| OpenTelemetry GenAI | `agent-regress import otel spans.json` |
+| Plain Python on the OpenAI, Anthropic or Gemini SDKs | `@tool` on your tool functions and `record_response(response)` |
+
+Each integration is tested against the real framework with a scripted model. Examples for each are in [examples/frameworks](examples/frameworks), and details in [docs/integrations.md](docs/integrations.md).
+
+## Running in CI
+
+```yaml
+- run: pip install agent-regress
+- run: agent-regress run tests/agent_suite.py --repeats 5
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+
+The results table appears on the pull request's checks page. A full workflow is in [examples/github_workflow.yml](examples/github_workflow.yml).
+
+## How randomness is handled
+
+- Every case runs `repeats` times (3 by default; 5 to 10 is better for CI).
+- A case is **ok** when every run passes, **flaky** when some do, and **failing** when none do.
+- A case has **regressed** when its pass rate drops by 30 points or more compared with the baseline. Change this with `--tolerance`.
+- When the drop could still be noise at this sample size, the report says "check with more repeats" instead of overstating it.
+
+## Roadmap
+
+- Record and replay tool results, so suites run without calling live systems.
+- Multi turn cases with a simulated user.
+- A pytest plugin.
+- Parallel runs across CI machines for large suites.
+
+## Docs
+
+- [Why this exists](docs/why.md): the problem we picked and the options we weighed
+- [Guide](docs/guide.md): checks, baselines, budgets, CI and model graders
+- [Integrations](docs/integrations.md): setup for every framework
+- [Contributing](CONTRIBUTING.md)
 
 MIT licensed.

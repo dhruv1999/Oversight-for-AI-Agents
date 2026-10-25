@@ -7,7 +7,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python: ["3.11", "3.12", "3.13"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
         include:
           - os: macos-latest
             python: "3.12"
@@ -18,18 +18,15 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: uv sync --extra anthropic --extra mcp --extra openai --extra gemini
+      - run: uv sync
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
-      # -X warn_default_encoding + error: any file I/O that would break on Windows' cp1252 default fails the build
+      # any file I/O that relies on the platform's default encoding fails the build (it breaks on Windows)
       - run: uv run python -X warn_default_encoding -W error::EncodingWarning -m pytest -q
 
   frameworks:
-    # the decorator inside real agent frameworks
+    # each integration against the real framework, driven by a scripted model (no API keys)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,25 +34,24 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync
-      - run: uv run --with openai-agents --with langchain-core pytest -q tests/test_frameworks.py
+      - run: >-
+          uv run --with openai-agents --with langgraph --with langchain-core --with google-adk
+          --with claude-agent-sdk --with opentelemetry-sdk --with anthropic --with openai --with google-genai
+          pytest -q -rs
 
-  review-page:
-    # the review page in a real browser: approving, stepping away, and markup from the agent shown as text
+  crewai:
+    # separate job: CrewAI pins its own versions of shared dependencies
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: npm install -g playwright@1.56.1 && npx -y playwright@1.56.1 install --with-deps chromium
       - run: uv sync
-      - run: OVERSIGHT_REQUIRE_BROWSER=1 uv run pytest -q tests/test_review_page.py
+      - run: uv run --with crewai pytest -q tests/test_crewai.py
 
   install-from-scratch:
-    # what a new user does: pip install the repo into a clean environment and use it from another folder
+    # what a new user does: pip install into a clean environment, then run the quickstart from another folder
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,6 +59,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m venv /tmp/env && /tmp/env/bin/pip install .
-      - run: cd /tmp && /tmp/env/bin/python "$GITHUB_WORKSPACE/examples/quickstart.py"
-      - run: cd /tmp && /tmp/env/bin/oversight check pay_invoice '{"vendor":"Acme","amount":420}' || test $? -eq 3
-      - run: cd /tmp && /tmp/env/bin/python -c "from oversight.server import PAGE; assert PAGE.is_file(), PAGE"
+      - run: |
+          cd /tmp
+          /tmp/env/bin/agent-regress run "$GITHUB_WORKSPACE/examples/quickstart/suite.py" --save-baseline
+          AGENT_VERSION=2 /tmp/env/bin/agent-regress run "$GITHUB_WORKSPACE/examples/quickstart/suite.py" && exit 1 || test $? -eq 1
